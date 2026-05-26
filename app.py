@@ -7,7 +7,24 @@ st.set_page_config(
     layout="wide",
 )
 
-# Connect to Snowflake using secrets
+# --- Login gate ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+if not st.session_state.authenticated:
+    st.title("Login")
+    username = st.text_input("Username")
+    password = st.text_input("Password", type="password")
+    if st.button("Sign in"):
+        users = st.secrets["users"]
+        if username in users and users[username] == password:
+            st.session_state.authenticated = True
+            st.rerun()
+        else:
+            st.error("Invalid username or password")
+    st.stop()
+
+# --- Dashboard (only runs after login) ---
 conn = st.connection("snowflake")
 
 st.title("Accounts Receivable")
