@@ -23,7 +23,7 @@ df = conn.query("""
         aging_bucket            AS "Aging Bucket",
         department_name         AS "Department",
         sa_type                 AS "SA Type",
-        days_past_due
+        days_past_due           AS "Days Past Due"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
     ORDER BY due_date ASC
 """)
@@ -37,7 +37,7 @@ with col2:
 with col3:
     st.metric("Customers", f"{df['Customer'].nunique():,}")
 with col4:
-    st.metric("Avg Days Past Due", f"{df['days_past_due'].mean():.0f}")
+    st.metric("Avg Days Past Due", f"{df['Days Past Due'].mean():.0f}")
 
 st.divider()
 
