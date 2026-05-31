@@ -46,6 +46,9 @@ df = conn.query("""
     ORDER BY due_date ASC
 """)
 
+# Clean up department names — strip "DFC - " prefix so they merge with legacy names
+df["Department"] = df["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
+
 # Summary metrics
 col1, col2, col3, col4 = st.columns(4)
 with col1:
