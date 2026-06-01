@@ -181,7 +181,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    col_l, col_m, col_r = st.columns([1, 1, 1])
+    col_l, col_m, col_r = st.columns([1, 2, 1])
     with col_m:
         st.markdown("<br><br>", unsafe_allow_html=True)
         flame_path = Path(__file__).parent / "Flame.png"
@@ -376,8 +376,6 @@ if len(snapshot_df) > 0:
             ],
         )
         .properties(height=400)
-        .configure_view(strokeWidth=0)
-        .configure_axis(gridColor="#333333")
     )
 
     totals = snapshot_df.groupby(["Week Label", "Week"], as_index=False)["Amount"].sum()
@@ -393,7 +391,8 @@ if len(snapshot_df) > 0:
         )
     )
 
-    st.altair_chart(chart + text, use_container_width=True)
+    combined = (chart + text).configure_view(strokeWidth=0).configure_axis(gridColor="#333333")
+    st.altair_chart(combined, use_container_width=True)
 else:
     st.info("No snapshot data yet. The first snapshot will appear after Friday at 5 PM.")
 
