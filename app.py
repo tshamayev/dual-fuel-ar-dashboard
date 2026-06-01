@@ -15,162 +15,218 @@ st.set_page_config(
 # --- Dual Fuel Brand CSS ---
 st.markdown("""
 <style>
-/* === Base theme overrides === */
+/* === Import font === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* === Base === */
+*, html, body, [class*="css"] {
+    font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
+}
 [data-testid="stAppViewContainer"] {
-    background-color: #000000;
+    background-color: #0a0a0f;
 }
 [data-testid="stHeader"] {
-    background-color: #000000;
+    background-color: #0a0a0f;
 }
+
+/* === Sidebar === */
 [data-testid="stSidebar"] {
-    background-color: #1A1A1A;
-    border-right: 1px solid #333333;
+    background-color: #11111a;
+    border-right: 1px solid #1e1e2e;
 }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
-    color: #FFFFFF;
+    color: #e0e0e0;
 }
 
 /* === Metric cards === */
 [data-testid="stMetric"] {
-    background-color: #1A1A1A;
-    border: 1px solid #333333;
+    background: linear-gradient(135deg, #141422 0%, #1a1a2e 100%);
+    border: 1px solid #2a2a3e;
     border-top: 3px solid #C30017;
-    border-radius: 4px;
-    padding: 16px 20px;
+    border-radius: 8px;
+    padding: 20px 24px;
+    transition: border-color 0.2s;
 }
-[data-testid="stMetricLabel"] {
-    color: #C0C0C0 !important;
+[data-testid="stMetric"]:hover {
+    border-color: #C30017;
 }
 [data-testid="stMetricLabel"] p {
-    color: #C0C0C0 !important;
-    font-size: 0.85rem !important;
+    color: #808090 !important;
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
 }
 [data-testid="stMetricValue"] {
     color: #FFFFFF !important;
-    font-size: 1.8rem !important;
+    font-size: 1.6rem !important;
     font-weight: 700 !important;
 }
 
-/* === Title styling === */
-h1 {
-    color: #FFFFFF !important;
-    font-family: 'Helvetica Neue', Arial, sans-serif !important;
-    font-weight: 700 !important;
-}
-h2, h3 {
-    color: #FFFFFF !important;
-    font-family: 'Helvetica Neue', Arial, sans-serif !important;
-}
+/* === Headings === */
+h1 { color: #FFFFFF !important; font-weight: 700 !important; }
+h2 { color: #FFFFFF !important; font-weight: 700 !important; }
+h3 { color: #FFFFFF !important; font-weight: 600 !important; }
 
-/* === Red accent divider === */
+/* === Hide anchor links on headings === */
+a.headerLink { display: none !important; }
+h1 a, h2 a, h3 a { display: none !important; }
+[data-testid="stMarkdownContainer"] h2 a { display: none !important; }
+
+/* === Dividers === */
 hr {
-    border-color: #C30017 !important;
-    border-width: 2px !important;
+    border: none !important;
+    height: 1px !important;
+    background: linear-gradient(90deg, transparent, #C30017, transparent) !important;
+    margin: 24px 0 !important;
 }
 
-/* === Dataframe styling === */
+/* === Dataframe === */
 [data-testid="stDataFrame"] {
-    background-color: #1A1A1A;
-    border: 1px solid #333333;
-    border-radius: 4px;
+    background-color: #141422;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
-/* === Sidebar filter labels === */
+/* === Sidebar labels === */
 [data-testid="stSidebar"] label {
-    color: #C0C0C0 !important;
+    color: #808090 !important;
     text-transform: uppercase;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.5px;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.8px;
 }
 
-/* === Sidebar multiselect and text inputs === */
+/* === Sidebar inputs === */
 [data-testid="stSidebar"] [data-testid="stMultiSelect"] {
-    margin-bottom: 8px;
-}
-[data-testid="stSidebar"] .stTextInput input {
-    background-color: #333333;
-    color: #FFFFFF;
-    border: 1px solid #808080;
-}
-[data-testid="stSidebar"] .stTextInput input:focus {
-    border-color: #C30017;
+    margin-bottom: 4px;
 }
 
 /* === Chart container === */
 [data-testid="stVegaLiteChart"] {
-    background-color: #1A1A1A;
-    border: 1px solid #333333;
-    border-radius: 4px;
-    padding: 12px;
+    background-color: #141422;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    padding: 16px;
+    overflow: hidden;
 }
 
 /* === General text === */
 [data-testid="stMarkdownContainer"] p {
-    color: #FFFFFF;
+    color: #e0e0e0;
 }
 
-/* === Total row styling === */
+/* === Total row === */
 .total-row {
-    background-color: #1A1A1A;
-    border: 1px solid #333333;
+    background: linear-gradient(135deg, #141422 0%, #1a1a2e 100%);
+    border: 1px solid #2a2a3e;
     border-left: 4px solid #C30017;
-    border-radius: 4px;
-    padding: 12px 20px;
-    margin-top: 8px;
+    border-radius: 8px;
+    padding: 14px 24px;
+    margin-top: 10px;
 }
 .total-row p {
     color: #FFFFFF !important;
-    font-size: 1.1rem !important;
+    font-size: 1.05rem !important;
+    font-weight: 600 !important;
     margin: 0 !important;
 }
 
 /* === Info box === */
 [data-testid="stAlert"] {
-    background-color: #1A1A1A;
-    border: 1px solid #333333;
-    color: #C0C0C0;
+    background-color: #141422;
+    border: 1px solid #2a2a3e;
+    border-radius: 8px;
+    color: #808090;
 }
 
 /* === Hide Streamlit branding === */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+header[data-testid="stHeader"] {visibility: hidden;}
 
-/* === Sidebar logo section === */
+/* === Sidebar logo === */
 .sidebar-logo {
     text-align: center;
-    padding: 12px 0 8px 0;
-    border-bottom: 1px solid #333333;
-    margin-bottom: 20px;
+    padding: 16px 0 12px 0;
+    border-bottom: 1px solid #1e1e2e;
+    margin-bottom: 24px;
 }
-.sidebar-logo img {
-    width: 50px;
-    height: 50px;
-}
+.sidebar-logo img { width: 44px; height: 44px; }
 .sidebar-title {
     color: #FFFFFF;
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 700;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
-    margin: 8px 0 2px 0;
+    margin: 10px 0 2px 0;
+    letter-spacing: 0.5px;
 }
 .sidebar-subtitle {
     color: #C30017;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
     margin: 0;
 }
 .filter-header {
     color: #C30017 !important;
-    font-size: 0.8rem !important;
+    font-size: 0.72rem !important;
     font-weight: 700 !important;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    margin-top: 16px !important;
-    margin-bottom: 8px !important;
+    margin-top: 8px !important;
+    margin-bottom: 12px !important;
+}
+
+/* === Section labels === */
+.section-label {
+    color: #808090 !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 4px !important;
+}
+
+/* === Login page === */
+.login-wrap {
+    text-align: center;
+    max-width: 380px;
+    margin: 0 auto;
+    padding-top: 60px;
+}
+.login-wrap img { margin-bottom: 16px; }
+.login-title {
+    color: #FFFFFF;
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 6px 0;
+    text-align: center;
+}
+.login-sub {
+    color: #C30017;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin: 0 0 32px 0;
+    text-align: center;
+}
+
+/* === Button styling === */
+[data-testid="stButton"] button {
+    background-color: #C30017 !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: 6px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.5px;
+    padding: 10px 24px !important;
+    transition: background-color 0.2s;
+}
+[data-testid="stButton"] button:hover {
+    background-color: #D30011 !important;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -181,24 +237,23 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
+    # Centered login using markdown container
+    flame_path = Path(__file__).parent / "Flame.png"
+    flame_html = ""
+    if flame_path.exists():
+        flame_b64 = base64.b64encode(flame_path.read_bytes()).decode()
+        flame_html = f'<img src="data:image/png;base64,{flame_b64}" width="56">'
+
+    st.markdown(
+        f'<div class="login-wrap">'
+        f'{flame_html}'
+        f'<p class="login-title">Dual Fuel</p>'
+        f'<p class="login-sub">AR Dashboard</p>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
     col_l, col_m, col_r = st.columns([1, 2, 1])
     with col_m:
-        st.markdown("<br><br>", unsafe_allow_html=True)
-        flame_path = Path(__file__).parent / "Flame.png"
-        if flame_path.exists():
-            flame_b64 = base64.b64encode(flame_path.read_bytes()).decode()
-            st.markdown(
-                f'<div style="text-align:center;margin-bottom:16px;">'
-                f'<img src="data:image/png;base64,{flame_b64}" width="60"></div>',
-                unsafe_allow_html=True,
-            )
-        st.markdown(
-            '<h2 style="text-align:center;margin-bottom:4px;">Dual Fuel</h2>'
-            '<p style="text-align:center;color:#C30017;font-size:0.8rem;'
-            'letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;">'
-            'AR Dashboard</p>',
-            unsafe_allow_html=True,
-        )
         username = st.text_input("Username")
         password = st.text_input("Password", type="password")
         if st.button("Sign in", use_container_width=True):
@@ -278,11 +333,10 @@ if customer_search:
 
 # === MAIN CONTENT ===
 st.markdown(
-    '<h1 style="margin-bottom:4px;">AR Dashboard</h1>'
-    '<p style="color:#808080;font-size:0.9rem;margin-bottom:24px;">'
-    'Weekly Trends &amp; Open Invoice Tracking</p>',
+    '<p class="section-label" style="margin-top:8px;">Overview</p>',
     unsafe_allow_html=True,
 )
+st.markdown("## AR Dashboard")
 
 # --- Metric cards ---
 col1, col2, col3, col4 = st.columns(4)
@@ -300,8 +354,7 @@ st.divider()
 
 # --- Data table ---
 st.markdown(
-    '<p style="color:#C0C0C0;font-size:0.8rem;text-transform:uppercase;'
-    'letter-spacing:0.5px;margin-bottom:8px;">Open Invoices</p>',
+    '<p class="section-label">Open Invoices</p>',
     unsafe_allow_html=True,
 )
 
@@ -316,7 +369,7 @@ st.dataframe(
 )
 
 st.markdown(
-    f'<div class="total-row"><p><strong>Total: ${filtered["Balance"].sum():,.2f}</strong></p></div>',
+    f'<div class="total-row"><p>Total: ${filtered["Balance"].sum():,.2f}</p></div>',
     unsafe_allow_html=True,
 )
 
@@ -324,11 +377,10 @@ st.divider()
 
 # --- Weekly AR Trend Chart ---
 st.markdown(
-    '<p style="color:#C0C0C0;font-size:0.8rem;text-transform:uppercase;'
-    'letter-spacing:0.5px;margin-bottom:4px;">AR Aging Trend</p>'
-    '<h3 style="margin-top:0;">Weekly Snapshots</h3>',
+    '<p class="section-label">AR Aging Trend</p>',
     unsafe_allow_html=True,
 )
+st.markdown("### Weekly Snapshots")
 
 snapshot_df = conn.query("""
     SELECT
@@ -350,23 +402,23 @@ if len(snapshot_df) > 0:
 
     chart = (
         alt.Chart(snapshot_df)
-        .mark_bar(cornerRadiusTopLeft=2, cornerRadiusTopRight=2)
+        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
         .encode(
             x=alt.X(
                 "Week Label:N",
                 title="Week Ending",
                 sort=alt.SortField(field="Week", order="ascending"),
-                axis=alt.Axis(labelAngle=-45, labelColor="#C0C0C0", titleColor="#808080"),
+                axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090"),
             ),
             y=alt.Y(
                 "Amount:Q",
                 title="AR ($)",
-                axis=alt.Axis(format="$,.0f", labelColor="#C0C0C0", titleColor="#808080"),
+                axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090"),
             ),
             color=alt.Color(
                 "Aging Bucket:N",
                 scale=color_scale,
-                legend=alt.Legend(title="Aging Bucket", orient="top", labelColor="#C0C0C0", titleColor="#808080"),
+                legend=alt.Legend(title="Aging Bucket", orient="top", labelColor="#c0c0c0", titleColor="#808090"),
             ),
             order=alt.Order("aging_bucket_sort:Q"),
             tooltip=[
@@ -375,7 +427,7 @@ if len(snapshot_df) > 0:
                 alt.Tooltip("Amount:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=400)
+        .properties(height=380, padding={"top": 30, "bottom": 10, "left": 10, "right": 10})
     )
 
     totals = snapshot_df.groupby(["Week Label", "Week"], as_index=False)["Amount"].sum()
@@ -383,7 +435,7 @@ if len(snapshot_df) > 0:
 
     text = (
         alt.Chart(totals)
-        .mark_text(dy=-10, fontSize=11, fontWeight="bold", color="#FFFFFF")
+        .mark_text(dy=-14, fontSize=12, fontWeight="bold", color="#FFFFFF")
         .encode(
             x=alt.X("Week Label:N", sort=alt.SortField(field="Week", order="ascending")),
             y=alt.Y("Amount:Q"),
@@ -391,7 +443,11 @@ if len(snapshot_df) > 0:
         )
     )
 
-    combined = (chart + text).configure_view(strokeWidth=0).configure_axis(gridColor="#333333")
+    combined = (
+        (chart + text)
+        .configure_view(strokeWidth=0)
+        .configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e")
+    )
     st.altair_chart(combined, use_container_width=True)
 else:
     st.info("No snapshot data yet. The first snapshot will appear after Friday at 5 PM.")
