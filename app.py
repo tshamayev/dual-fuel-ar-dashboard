@@ -23,15 +23,15 @@ st.markdown("""
     font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif !important;
 }
 [data-testid="stAppViewContainer"] {
-    background-color: #0a0a0f;
+    background-color: #000000;
 }
 [data-testid="stHeader"] {
-    background-color: #0a0a0f;
+    background-color: #000000;
 }
 
 /* === Sidebar === */
 [data-testid="stSidebar"] {
-    background-color: #11111a;
+    background-color: #0d0d12;
     border-right: 1px solid #1e1e2e;
 }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
@@ -427,7 +427,7 @@ if len(snapshot_df) > 0:
                 alt.Tooltip("Amount:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=380, padding={"top": 30, "bottom": 10, "left": 10, "right": 10})
+        .properties(height=380)
     )
 
     totals = snapshot_df.groupby(["Week Label", "Week"], as_index=False)["Amount"].sum()
@@ -435,7 +435,7 @@ if len(snapshot_df) > 0:
 
     text = (
         alt.Chart(totals)
-        .mark_text(dy=-14, fontSize=12, fontWeight="bold", color="#FFFFFF")
+        .mark_text(dy=-12, fontSize=12, fontWeight="bold", color="#FFFFFF")
         .encode(
             x=alt.X("Week Label:N", sort=alt.SortField(field="Week", order="ascending")),
             y=alt.Y("Amount:Q"),
