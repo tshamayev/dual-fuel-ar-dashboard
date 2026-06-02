@@ -394,17 +394,25 @@ st.markdown("### Weekly Snapshots")
 
 snapshot_raw = conn.query("""
     SELECT
-        snapshot_date       AS \"Week\",
-        aging_bucket        AS \"Aging Bucket\",
+        snapshot_date,
+        aging_bucket,
         aging_bucket_sort,
-        outstanding_balance AS \"Amount\",
-        department_name     AS \"Department\",
-        project_manager     AS \"Project Manager\",
-        property_name       AS \"Property / Project\",
-        billing_customer_name AS \"Customer\"
+        outstanding_balance,
+        department_name,
+        project_manager,
+        property_name,
+        billing_customer_name
     FROM ANALYTICS.GOLD.FCT_AR_INVOICE_SNAPSHOT
     ORDER BY snapshot_date, aging_bucket_sort
 """)
+
+# Rename columns to match dashboard conventions
+snapshot_raw = snapshot_raw.rename(columns={
+    "SNAPSHOT_DATE": "Week", "AGING_BUCKET": "Aging Bucket",
+    "AGING_BUCKET_SORT": "aging_bucket_sort", "OUTSTANDING_BALANCE": "Amount",
+    "DEPARTMENT_NAME": "Department", "PROJECT_MANAGER": "Project Manager",
+    "PROPERTY_NAME": "Property / Project", "BILLING_CUSTOMER_NAME": "Customer",
+})
 
 if len(snapshot_raw) > 0:
     # Clean department names in snapshot too
