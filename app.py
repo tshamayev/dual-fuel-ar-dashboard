@@ -287,6 +287,10 @@ df = conn.query("""
 # Clean up department names
 df["Department"] = df["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
 
+# Fill blank properties and PMs with dash for display
+df["Property / Project"] = df["Property / Project"].fillna("—").replace("", "—")
+df["Project Manager"] = df["Project Manager"].fillna("—").replace("", "—")
+
 
 # === SIDEBAR ===
 with st.sidebar:
@@ -388,17 +392,37 @@ st.markdown(
 )
 st.markdown("### Weekly Snapshots")
 
-snapshot_df = conn.query("""
+snapshot_raw = conn.query("""
     SELECT
-        snapshot_date   AS \"Week\",
-        aging_bucket    AS \"Aging Bucket\",
+        snapshot_date       AS \"Week\",
+        aging_bucket        AS \"Aging Bucket\",
         aging_bucket_sort,
-        total_outstanding AS \"Amount\"
-    FROM ANALYTICS.GOLD.FCT_AR_WEEKLY_SNAPSHOT
+        outstanding_balance AS \"Amount\",
+        department_name     AS \"Department\",
+        project_manager     AS \"Project Manager\",
+        property_name       AS \"Property / Project\",
+        billing_customer_name AS \"Customer\"
+    FROM ANALYTICS.GOLD.FCT_AR_INVOICE_SNAPSHOT
     ORDER BY snapshot_date, aging_bucket_sort
 """)
 
-if len(snapshot_df) > 0:
+if len(snapshot_raw) > 0:
+    # Clean department names in snapshot too
+    snapshot_raw["Department"] = snapshot_raw["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
+
+    # Apply same filters to snapshot data
+    snap_filtered = snapshot_raw.copy()
+    if dept_filter:
+        snap_filtered = snap_filtered[snap_filtered["Department"].isin(dept_filter)]
+    if property_filter:
+        snap_filtered = snap_filtered[snap_filtered["Property / Project"].isin(property_filter)]
+    if customer_search:
+        snap_filtered = snap_filtered[snap_filtered["Customer"].str.contains(customer_search, case=False, na=False)]
+    if pm_filter:
+        snap_filtered = snap_filtered[snap_filtered["Project Manager"].isin(pm_filter)]
+
+    # Aggregate filtered snapshot data
+    snapshot_df = snap_filtered.groupby(["Week", "Aging Bucket", "aging_bucket_sort"], as_index=False)["Amount"].sum()
     snapshot_df["Week Label"] = pd.to_datetime(snapshot_df["Week"]).dt.strftime("%m/%d/%Y")
 
     color_scale = alt.Scale(
