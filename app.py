@@ -237,7 +237,6 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
-    # Centered login using markdown container
     flame_path = Path(__file__).parent / "Flame.png"
     flame_html = ""
     if flame_path.exists():
@@ -279,7 +278,8 @@ df = conn.query("""
         aging_bucket            AS \"Aging Bucket\",
         department_name         AS \"Department\",
         sa_type                 AS \"SA Type\",
-        days_past_due           AS \"Days Past Due\"
+        days_past_due           AS \"Days Past Due\",
+        project_manager         AS \"Project Manager\"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
     ORDER BY due_date ASC
 """)
@@ -317,6 +317,10 @@ with st.sidebar:
         options=sorted(df["Property / Project"].dropna().unique()),
     )
     customer_search = st.text_input("Search Customer")
+    pm_filter = st.multiselect(
+        "Project Manager",
+        options=sorted(df["Project Manager"].dropna().loc[df["Project Manager"] != ""].unique()),
+    )
 
 
 # Apply filters
@@ -329,6 +333,8 @@ if property_filter:
     filtered = filtered[filtered["Property / Project"].isin(property_filter)]
 if customer_search:
     filtered = filtered[filtered["Customer"].str.contains(customer_search, case=False, na=False)]
+if pm_filter:
+    filtered = filtered[filtered["Project Manager"].isin(pm_filter)]
 
 
 # === MAIN CONTENT ===
@@ -359,7 +365,7 @@ st.markdown(
 )
 
 st.dataframe(
-    filtered[["Customer", "Property / Project", "Invoice", "Balance", "Date"]].style.format({
+    filtered[["Customer", "Property / Project", "Project Manager", "Invoice", "Balance", "Date"]].style.format({
         "Balance": "${:,.2f}",
         "Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
     }),
