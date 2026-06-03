@@ -237,6 +237,7 @@ if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
 if not st.session_state.authenticated:
+    # Centered login using markdown container
     flame_path = Path(__file__).parent / "Flame.png"
     flame_html = ""
     if flame_path.exists():
@@ -270,16 +271,16 @@ conn = st.connection("snowflake")
 
 df = conn.query("""
     SELECT
-        billing_customer_name   AS \"Customer\",
-        property_name           AS \"Property / Project\",
-        invoice_number          AS \"Invoice\",
-        outstanding_balance     AS \"Balance\",
-        due_date                AS \"Date\",
-        aging_bucket            AS \"Aging Bucket\",
-        department_name         AS \"Department\",
-        sa_type                 AS \"SA Type\",
-        days_past_due           AS \"Days Past Due\",
-        project_manager         AS \"Project Manager\"
+        billing_customer_name   AS "Customer",
+        property_name           AS "Property / Project",
+        invoice_number          AS "Invoice",
+        outstanding_balance     AS "Balance",
+        due_date                AS "Date",
+        aging_bucket            AS "Aging Bucket",
+        department_name         AS "Department",
+        sa_type                 AS "SA Type",
+        days_past_due           AS "Days Past Due",
+        project_manager         AS "Project Manager"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
     ORDER BY due_date ASC
 """)
@@ -290,6 +291,198 @@ df["Department"] = df["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
 # Fill blank properties and PMs with dash for display
 df["Property / Project"] = df["Property / Project"].fillna("—").replace("", "—")
 df["Project Manager"] = df["Project Manager"].fillna("—").replace("", "—")
+
+# === Updated Customer Name overrides (management transfers) ===
+CUSTOMER_OVERRIDES = [
+    ("35 East 10th St:HW Heater Installation", "AKAM Associates, Inc."),
+    ("35 East 10th St", "AKAM Associates, Inc."),
+    ("421 West 57th Street", "AKAM Associates, Inc."),
+    ("345 East 69th St", "AKAM Associates, Inc."),
+    ("860 Grand Concourse", "Argo Real Estate, LLC"),
+    ("448 West 37th St.", "Argo Real Estate, LLC"),
+    ("414 East 119th St", "Choice New York Management"),
+    ("409 East 84th St.", "Choice New York Management"),
+    ("3535 Kings College Place", "David Associates"),
+    ("31-05 39th Ave", "David Associates"),
+    ("61-05 39th Ave", "David Associates"),
+    ("Camber - Bronx Park PH2 - 1985 Webster Ave (PH2)", "Dolphin Property Services LLC"),
+    ("Camber - Remeeder Houses - 585 Blake Avenue", "Dolphin Property Services LLC"),
+    ("Camber - Stevenson - 1850 Lafayette Ave", "Dolphin Property Services LLC"),
+    ("Camber - Remeeder - 350 Sheffield Ave", "Dolphin Property Services LLC"),
+    ("Camber - Target - 1971 Grand Ave, LLC", "Dolphin Property Services LLC"),
+    ("2095 Honeywell Ave", "Dolphin Property Services LLC"),
+    ("876 East 180th St", "Dolphin Property Services LLC"),
+    ("1898 Belmont Ave", "Dolphin Property Services LLC"),
+    ("1899 Belmont Ave", "Dolphin Property Services LLC"),
+    ("1900 Belmont Ave", "Dolphin Property Services LLC"),
+    ("1908 Belmont Ave", "Dolphin Property Services LLC"),
+    ("2083 Mohegan Ave", "Dolphin Property Services LLC"),
+    ("2088 Mohegan Ave", "Dolphin Property Services LLC"),
+    ("2090 Mohegan Ave", "Dolphin Property Services LLC"),
+    ("1892 Arthur Ave", "Dolphin Property Services LLC"),
+    ("1133 Ogden Ave", "Dolphin Property Services LLC"),
+    ("Morningside - 107 West 109th St", "Dolphin Property Services LLC"),
+    ("287 Audubon Avenue", "Dolphin Property Services LLC"),
+    ("Deschler - 1871 7th Ave (Adam Clayton Powell Jr)", "Dolphin Property Services LLC"),
+    ("Johana - 106 West 144th St", "Dolphin Property Services LLC"),
+    ("Morris Heights Mews - 47 West 175th St.", "Dolphin Property Services LLC"),
+    ("Camber - 44 West 175th St.", "Dolphin Property Services LLC"),
+    ("Morris Heights Mews - 1695 Grand Ave.", "Dolphin Property Services LLC"),
+    ("Camber - Trinity - 2105 Daly Ave", "Dolphin Property Services LLC"),
+    ("SHF - 44 West 175th St.", "Dolphin Property Services LLC"),
+    ("340 East 93rd St.", "Douglas Elliman Property Management"),
+    ("Sea Park North - 2828 West 28th Street", "Gilbane Development Company"),
+    ("Sea Park East - 2980 West 28th street", "Gilbane Development Company"),
+    ("Sea Park West- 2930 West 30th Street", "Gilbane Development Company"),
+    ("2828 W 28th Street", "Gilbane Development Company"),
+    ("2930 W 30th Street", "Gilbane Development Company"),
+    ("2828 W 28th St", "Gilbane Development Company"),
+    ("2930 W 30th St", "Gilbane Development Company"),
+    ("2980 W 28th St", "Gilbane Development Company"),
+    ("Linden Plaza Building #10", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #1", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #2", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #3", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #4", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #5", "Grenadier Realty Corp"),
+    ("Linden Plaza Building #6", "Grenadier Realty Corp"),
+    ("2165 Matthews Avenue", "John B. Lovett & Associates, Ltd."),
+    ("MBD New Heights Apts. II (MPLP) - 1093 Jerome Avenue", "MBD Community Housing Corporation"),
+    ("MBD New Heights Apts. II (MPLP) - 1095 Jerome Avenue", "MBD Community Housing Corporation"),
+    ("MBD New Heights Apts. LP - 970 Anderson Avenue", "MBD Community Housing Corporation"),
+    ("MBD New Heights Apts. LP - 1105 Tinton Avenue", "MBD Community Housing Corporation"),
+    ("MBD New Heights Apts. LP - 1120 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Mid Bronx Plaza 1690-1700 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Rose Ellen Smith - 1131 West Farms Road", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1661 Southern Boulevard", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1675 Southern Boulevard", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1345 Southern Boulevard", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1816 Crotona Park East", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 909 East 173rd Street", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 960 East 173rd Street", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1174 West Farms Road", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 961 East 173rd Sreet", "MBD Community Housing Corporation"),
+    ("MBD Mid Bronx Plaza - 1441 Boston Road", "MBD Community Housing Corporation"),
+    ("MBD Rose Ellen Smith - 1711 Hoe Avenue", "MBD Community Housing Corporation"),
+    ("MBD WE Mobley - 1714 Crotona Park East", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1160 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1415 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1434 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1438 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1665 Bryant Avenue", "MBD Community Housing Corporation"),
+    ("MBD WE Mobley - 945 East 174th Street", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1014 Home Street", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1522 Vyse Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1536 Vyse Avenue", "MBD Community Housing Corporation"),
+    ("MBD Silva Taylor - 1566 Vyse Avenue", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1346 Lyman Place", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1359 Lyman Place", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1360 Lyman Place", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1365 Lyman Place", "MBD Community Housing Corporation"),
+    ("MBD Don L W LLC - 1366 Lyman Place", "MBD Community Housing Corporation"),
+    ("MBD Don LW - 1389 Stebbins Avenue", "MBD Community Housing Corporation"),
+    ("MBD DON LW - 1327 Southern Blvd", "MBD Community Housing Corporation"),
+    ("474 West 238th St", "Norwax Associates Inc."),
+    ("511 East 12th St", "Novum Properties"),
+    ("239 West 139th Street", "St Marks Methodist Church"),
+    ("804 West 180th St", "Synoptic Management Corp."),
+    ("Camber - Seneca - 1314 Seneca Ave", "The Wavecrest Management Team, Ltd."),
+    ("2403 Adam Clayton Powell Blvd", "The Wavecrest Management Team, Ltd."),
+    ("2405 Adam Clayton Powell Blvd", "The Wavecrest Management Team, Ltd."),
+    ("2109-2111 Amsterdam Ave", "The Wavecrest Management Team, Ltd."),
+    ("99 Fort Washington Ave", "The Wavecrest Management Team, Ltd."),
+    ("182 St Nicholas Ave", "The Wavecrest Management Team, Ltd."),
+    ("1504 Amsterdam Ave", "The Wavecrest Management Team, Ltd."),
+    ("110 West 139th St", "The Wavecrest Management Team, Ltd."),
+    ("120 East 123rd St", "The Wavecrest Management Team, Ltd."),
+    ("120 West 140th St", "The Wavecrest Management Team, Ltd."),
+    ("136 West 139th St", "The Wavecrest Management Team, Ltd."),
+    ("138 West 139th St", "The Wavecrest Management Team, Ltd."),
+    ("151 West 142nd St", "The Wavecrest Management Team, Ltd."),
+    ("173 West 140th St", "The Wavecrest Management Team, Ltd."),
+    ("335 East 111th St", "The Wavecrest Management Team, Ltd."),
+    ("450 West 164th St", "The Wavecrest Management Team, Ltd."),
+    ("457 West 164th St", "The Wavecrest Management Team, Ltd."),
+    ("500 West 164th St", "The Wavecrest Management Team, Ltd."),
+    ("500 West 177th St", "The Wavecrest Management Team, Ltd."),
+    ("501 West 176th St", "The Wavecrest Management Team, Ltd."),
+    ("502 West 177th St", "The Wavecrest Management Team, Ltd."),
+    ("503 West 177th St", "The Wavecrest Management Team, Ltd."),
+    ("506 West 176th St", "The Wavecrest Management Team, Ltd."),
+    ("506 West 177th St", "The Wavecrest Management Team, Ltd."),
+    ("509 West 176th St", "The Wavecrest Management Team, Ltd."),
+    ("510 West 176th St", "The Wavecrest Management Team, Ltd."),
+    ("511 West 134th St", "The Wavecrest Management Team, Ltd."),
+    ("514 West 134th St", "The Wavecrest Management Team, Ltd."),
+    ("514 West 176th St", "The Wavecrest Management Team, Ltd."),
+    ("515 West 134th St", "The Wavecrest Management Team, Ltd."),
+    ("529 West 133rd St", "The Wavecrest Management Team, Ltd."),
+    ("545 West 156th St", "The Wavecrest Management Team, Ltd."),
+    ("117 West 90th St", "The Wavecrest Management Team, Ltd."),
+    ("133 West 90th St", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1454 Grand Concourse Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1503-05 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1424-26 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1563 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1525-33 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1206 Westchester Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1410 Grand Concourse Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1512-14 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1550 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 373 E 183rd Street", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1610-16 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("301 W 46th Street", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1465-75-77 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1615-17 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1575 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1561 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 620 East 13th Street", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1530-32 Townsend Avenue", "The Wavecrest Management Team, Ltd."),
+    ("1484 Inwood Avenue", "The Wavecrest Management Team, Ltd."),
+    ("1563 Walton Ave", "The Wavecrest Management Team, Ltd."),
+    ("1561 Walton Avenue", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 35 Marcy Place", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1615 St. John\'s Place", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 1484 Inwood Avenue", "The Wavecrest Management Team, Ltd."),
+    ("35 Marcy Place", "The Wavecrest Management Team, Ltd."),
+    ("SHF - 82 Rutgers Slip", "Grenadier Realty Corp."),
+    ("140 Claremont Ave:Gas Conversion", "Total Management NYC LLC"),
+    ("140 Claremont Ave", "Total Management NYC LLC"),
+    ("371 West 123rd St", "Daisy Management"),
+    ("PPSP - 221 Linden Blvd - A-B", "Twin Pines Management"),
+    ("PPSP - 221 Linden Blvd - C-D", "Twin Pines Management"),
+    ("PPSP - 91-95 East 18th St", "Twin Pines Management"),
+    ("West Brighton Building #6", "Twin Pines Management"),
+    ("PPSP - 280 East 21st St", "Twin Pines Management"),
+    ("PPSP - 666 Ocean Ave.", "Twin Pines Management"),
+    ("PPSP - 682 Ocean Ave.", "Twin Pines Management"),
+    ("1140 Woodycrest Ave.", "Twin Pines Management"),
+    ("28 Lamartine Terrace", "Twin Pines Management"),
+    ("PPSP - 672 Ocean Ave", "Twin Pines Management"),
+    ("2363 Southern Blvd.", "Twin Pines Management"),
+    ("1105 Jerome Avenue", "Twin Pines Management"),
+    ("280 East 161st St.", "Twin Pines Management"),
+    ("50 St. Andrews Pl", "Twin Pines Management"),
+    ("101 West 165th", "Twin Pines Management"),
+    ("2199 Holland Avenue", "Garthchester Realty"),
+    ("11 Park Ave.", "Garthchester Realty"),
+    ("129 E 102nd St.", "All Area Realty Services"),
+    ("129 East 102nd St - Boiler Replacement", "All Area Realty Services"),
+    ("222 East 35th St", "Veritas Property Management"),
+    ("105 East 29th St.", "Venture NY Property Management, LLC"),
+    ("439 West 46th St", "Venture NY Property Management, LLC"),
+    ("230 East 179th St.", "Jonas Bronck Housing Company Inc."),
+]
+
+def get_updated_customer(row):
+    prop = str(row.get("Property / Project", "") or "").strip()
+    cust = str(row.get("Customer", "") or "").strip()
+    for pattern, new_cust in CUSTOMER_OVERRIDES:
+        if pattern.lower() in prop.lower():
+            return new_cust
+    return cust
+
+df["Updated Customer"] = df.apply(get_updated_customer, axis=1)
 
 
 # === SIDEBAR ===
@@ -369,7 +562,7 @@ st.markdown(
 )
 
 st.dataframe(
-    filtered[["Customer", "Property / Project", "Project Manager", "Invoice", "Balance", "Date"]].style.format({
+    filtered[["Customer", "Updated Customer", "Property / Project", "Project Manager", "Invoice", "Balance", "Date"]].style.format({
         "Balance": "${:,.2f}",
         "Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
     }),
@@ -489,4 +682,3 @@ if len(snapshot_raw) > 0:
     st.altair_chart(combined, use_container_width=True)
 else:
     st.info("No snapshot data yet. The first snapshot will appear after Friday at 5 PM.")
-
