@@ -279,6 +279,8 @@ df = conn.query("""
         aging_bucket            AS "Aging Bucket",
         department_name         AS "Department",
         sa_type                 AS "SA Type",
+        sa_number               AS "SA Number",
+        job_number              AS "Job Number",
         days_past_due           AS "Days Past Due",
         project_manager         AS "Project Manager"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
@@ -484,6 +486,12 @@ def get_updated_customer(row):
 
 df["Updated Customer"] = df.apply(get_updated_customer, axis=1)
 
+# === SA/MA classification — valid only if sa_number starts with SA/MA AND has a job number ===
+df["SA/MA"] = df["SA Number"].str[:2].where(
+    (df["SA Number"].str[:2].isin(["SA", "MA"])) & (df["Job Number"].notna()) & (df["Job Number"] != ""),
+    ""
+)
+
 
 # === SIDEBAR ===
 with st.sidebar:
@@ -518,6 +526,10 @@ with st.sidebar:
         "Project Manager",
         options=sorted(df["Project Manager"].dropna().loc[df["Project Manager"] != ""].unique()),
     )
+    sa_ma_filter = st.multiselect(
+        "SA / MA",
+        options=["SA", "MA"],
+    )
 
 
 # Apply filters
@@ -532,6 +544,8 @@ if customer_search:
     filtered = filtered[filtered["Customer"].str.contains(customer_search, case=False, na=False)]
 if pm_filter:
     filtered = filtered[filtered["Project Manager"].isin(pm_filter)]
+if sa_ma_filter:
+    filtered = filtered[filtered["SA/MA"].isin(sa_ma_filter)]
 
 
 # === MAIN CONTENT ===
@@ -553,6 +567,14 @@ with col4:
     avg_dpd = filtered['Days Past Due'].mean()
     st.metric("Avg Days Past Due", f"{avg_dpd:.0f}" if pd.notna(avg_dpd) else "—")
 
+sa_col1, sa_col2 = st.columns(2)
+with sa_col1:
+    ma_count = len(filtered[filtered["SA/MA"] == "MA"])
+    st.metric("MA Invoices", f"{ma_count}")
+with sa_col2:
+    sa_count = len(filtered[filtered["SA/MA"] == "SA"])
+    st.metric("SA Invoices", f"{sa_count}")
+
 st.divider()
 
 # --- Data table ---
@@ -562,7 +584,7 @@ st.markdown(
 )
 
 st.dataframe(
-    filtered[["Customer", "Updated Customer", "Property / Project", "Project Manager", "Invoice", "Balance", "Date"]].style.format({
+    filtered[["Customer", "Updated Customer", "Property / Project", "Project Manager", "SA/MA", "Invoice", "Balance", "Date"]].style.format({
         "Balance": "${:,.2f}",
         "Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
     }),
