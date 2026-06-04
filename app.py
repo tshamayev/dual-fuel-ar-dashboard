@@ -486,11 +486,13 @@ def get_updated_customer(row):
 
 df["Updated Customer"] = df.apply(get_updated_customer, axis=1)
 
-# === SA/MA classification — valid only if sa_number starts with SA/MA AND has a job number ===
+# === SA/MA classification — valid SA/MA = has agreement number, NO job number (recurring billing) ===
 df["SA/MA"] = df["SA Number"].str[:2].where(
-    (df["SA Number"].str[:2].isin(["SA", "MA"])) & (df["Job Number"].notna()) & (df["Job Number"] != ""),
+    (df["SA Number"].str[:2].isin(["SA", "MA"])) & ((df["Job Number"].isna()) | (df["Job Number"] == "")),
     ""
 )
+# Agreement match key for unique property counting (customer | property)
+df["Agreement Key"] = df["Customer"].fillna("") + " | " + df["Property / Project"].fillna("")
 
 
 # === SIDEBAR ===
@@ -569,11 +571,11 @@ with col4:
 
 sa_col1, sa_col2 = st.columns(2)
 with sa_col1:
-    ma_count = len(filtered[filtered["SA/MA"] == "MA"])
-    st.metric("MA Invoices", f"{ma_count}")
+    ma_count = filtered.loc[filtered["SA/MA"] == "MA", "Agreement Key"].nunique()
+    st.metric("MA", f"{ma_count}")
 with sa_col2:
-    sa_count = len(filtered[filtered["SA/MA"] == "SA"])
-    st.metric("SA Invoices", f"{sa_count}")
+    sa_count = filtered.loc[filtered["SA/MA"] == "SA", "Agreement Key"].nunique()
+    st.metric("SA", f"{sa_count}")
 
 st.divider()
 
