@@ -494,6 +494,168 @@ df["SA/MA"] = df["SA Number"].str[:2].where(
 # Agreement match key for unique property counting (customer | property)
 df["Agreement Key"] = df["Customer"].fillna("") + " | " + df["Property / Project"].fillna("")
 
+# === Collector Assignment (based on billing customer or updated customer) ===
+COLLECTOR_MAP = {
+    "Notias Construction": "John Viado", "Gilbane APEX": "John Viado",
+    "ETC Companies LLC": "John Viado", "The Wavecrest Management Team, Ltd.": "John Viado",
+    "Grenadier Realty Corp": "John Viado", "AKAM Associates, Inc.": "John Viado",
+    "AMK Contracting Corp": "John Viado", "CSA Preservation HTC LLC": "John Viado",
+    "Dolphin Property Services LLC": "John Viado", "MBD Community Housing Corporation": "John Viado",
+    "C&C Apartment Management LLC": "John Viado",
+    "Diego Beekman Mutual Housing Association, HDFC": "John Viado",
+    "Maxwell Kates": "John Viado", "Levine Builders": "John Viado",
+    "Twin Pines Management": "John Viado", "Century Management Services, Inc.": "John Viado",
+    "Gilbane Development Company": "John Viado", "Yeshiva University": "John Viado",
+    "Argo Real Estate, LLC": "John Viado", "Dalan Management": "John Viado",
+    "Fairstead Management": "John Viado", "Orsid New York": "John Viado",
+    "Shinda Management Corp.": "John Viado", "MD2 Property Group, LLC": "John Viado",
+    "East Harlem Council for Human Svcs, Inc": "John Viado",
+    "Wilshire Pacific Builders, LLC": "John Viado", "Canvas Property Group": "John Viado",
+    "CBRE Property Management": "John Viado", "Sugar Hill Capital Partners LLC": "John Viado",
+    "SW Management": "John Viado", "Settlement Housing Fund": "John Viado",
+    "Volmar Construction": "John Viado", "126-8 Fifth Ave, LLC": "John Viado",
+    "Hudsoncrest Properties": "John Viado", "Pact Renaissance Collaborative": "John Viado",
+    "Orsid Realty1": "John Viado", "Bennett Towers Apartment Inc": "John Viado",
+    "Carbon Quest, Inc.": "John Viado", "Allied Partners": "John Viado",
+    "419 Builders LLC": "John Viado", "Pinnacle City Living": "John Viado",
+    "TEG Bronx Park LLC": "John Viado", "Camber Property Group": "John Viado",
+    "Willdan Lighting & Electrical Inc": "John Viado", "B&D Heating LLC": "John Viado",
+    "4 East 80th LLC": "John Viado", "Guaranteed Home Improvement LLC": "John Viado",
+    "Terris Realty LLC": "Ryann Rayo", "ELH Mgmt, LLC": "Ryann Rayo",
+    "Related Properties": "Ryann Rayo", "Community Realty Management": "Ryann Rayo",
+    "TB Construction Services LLC": "Ryann Rayo", "Finger Management": "Ryann Rayo",
+    "New Bedford Management": "Ryann Rayo", "ABC Management": "Ryann Rayo",
+    "Lemle & Wolff Construction Corp": "Ryann Rayo",
+    "Clinton Housing Development Co.": "Ryann Rayo", "Robert E. Hill, Inc.": "Ryann Rayo",
+    "699-711 BKLYN Realty LLC": "Ryann Rayo", "David Associates": "Ryann Rayo",
+    "Tristar Management": "Ryann Rayo", "Andrews Organization": "Ryann Rayo",
+    "Clinton Management": "Ryann Rayo", "Stonebridge Realty Management": "Ryann Rayo",
+    "Kraus Management": "Ryann Rayo", "C Gershon Company, Inc": "Ryann Rayo",
+    "Winn Residential": "Ryann Rayo", "Total Management NYC LLC": "Ryann Rayo",
+    "ABC Restoration Inc.": "Ryann Rayo",
+    "Hunter Roberts Construction Group, LLC": "Ryann Rayo",
+    "Midas Management": "Ryann Rayo", "All Area Realty Services": "Ryann Rayo",
+    "Columbus Property Mangement": "Ryann Rayo", "Jonathan Rose Companies": "Ryann Rayo",
+    "Douglas Elliman Property Management": "Ryann Rayo",
+    "Jonas Bronck Housing Company Inc.": "Ryann Rayo", "Tri-Hill Management": "Ryann Rayo",
+    "Hazelton Capital Group": "Ryann Rayo", "Zeta Charter Schools, Inc.": "Ryann Rayo",
+    "Daisy Management": "Ryann Rayo", "Martino Mangement & Consulting": "Ryann Rayo",
+    "Big Apple Management": "Ryann Rayo", "Plaza Management": "Ryann Rayo",
+    "First Service Residential": "Ryann Rayo", "Leiter Management": "Ryann Rayo",
+    "Belveron Partners": "Ryann Rayo", "SKS Entreprises LLC": "Ryann Rayo",
+    "Halstead Management Co": "Ryann Rayo", "Alwest Management": "Ryann Rayo",
+    "Concord Management of NY": "Ryann Rayo", "Charles Greenthal Management": "Ryann Rayo",
+    "Harborview Properties": "Ryann Rayo", "Aguilar Gardens Inc.": "Ryann Rayo",
+    "Phillibert Estate Corp": "Ryann Rayo", "Total Realty Associates, Inc.": "Ryann Rayo",
+    "Scalzo Property Management": "Ryann Rayo", "Pride Property Management": "Ryann Rayo",
+    "White Management": "Ryann Rayo", "108 West 78th St Owners Corp": "Ryann Rayo",
+    "MGT Property Group": "Ryann Rayo", "Taconic Investment Partners": "Ryann Rayo",
+    "Emcor": "Ryann Rayo", "Luxstone Partners": "Ryann Rayo",
+    "DynaMax Realty Inc": "Ryann Rayo", "Anker Management": "Ryann Rayo",
+    "Ritz South Management": "Ryann Rayo", "SHP Management": "Ryann Rayo",
+    "1003-05 East 174 Street HDFC": "Ryann Rayo", "The Bisceglia Group": "Ryann Rayo",
+    "John B. Lovett & Associates, Ltd.": "Ryann Rayo", "Lori-Zee Corp": "Ryann Rayo",
+    "The Sherwin-Williams Company": "Ryann Rayo", "Safety Facility Services": "Ryann Rayo",
+    "Panasia Estate Inc": "Ryann Rayo", "Windsor Management Corp": "Ryann Rayo",
+    "Metro Management": "Ryann Rayo", "BOTA Property Management LLC": "Ryann Rayo",
+    "796-798 Ninth Successor LLC": "Ryann Rayo",
+    "RockBridge Property Mngt LLC": "Ryann Rayo",
+    "Dual Fuel - Installations": "Ryann Rayo",
+    "Fordham United Methodist Church": "Ryann Rayo", "Spigro Management": "Ryann Rayo",
+    "Synoptic Management Corp.": "Ryann Rayo", "Casa Cipriani New York": "Ryann Rayo",
+    "Neptune Mechanical": "Rechell Jongco", "River City Builders LLC": "Rechell Jongco",
+    "Akelius Real Estate Mangement LLC": "Rechell Jongco",
+    "Faria Management": "Rechell Jongco",
+    "Indoor Air Quality Champs, Inc.": "Rechell Jongco",
+    "Calgi Construction": "Rechell Jongco",
+    "NY Foundation for Senior Citizens, Inc.": "Rechell Jongco",
+    "Renewal Chateau JV": "Rechell Jongco", "Denali Management": "Rechell Jongco",
+    "Stillman Management": "Rechell Jongco",
+    "Montrose Management Associates, Inc.": "Rechell Jongco",
+    "Ferrara Management": "Rechell Jongco",
+    "Monadnock Construction, Inc.": "Rechell Jongco",
+    "Gramatan Management, Inc.": "Rechell Jongco",
+    "Memphis Downtown Condominiums": "Rechell Jongco",
+    "Green Cedar Management": "Rechell Jongco",
+    "Venture NY Property Management, LLC": "Rechell Jongco",
+    "Community Housing Management Corp": "Rechell Jongco",
+    "OTB Management": "Rechell Jongco", "Garthchester Realty": "Rechell Jongco",
+    "Apex ETC JV": "Rechell Jongco", "Platzner International Group": "Rechell Jongco",
+    "Grenadier Realty Corp.": "Rechell Jongco",
+    "Harlem Property Management": "Rechell Jongco",
+    "City of Mount Vernon, NY": "Rechell Jongco",
+    "South Glo Properties": "Rechell Jongco",
+    "St Marks Methodist Church": "Rechell Jongco", "BCD Owner LLC": "Rechell Jongco",
+    "Nina Dunn": "Rechell Jongco", "Genesis Companies": "Rechell Jongco",
+    "Choice New York Management": "Rechell Jongco",
+    "Solstice Residential Group, LLC": "Rechell Jongco",
+    "Sandberg Management": "Rechell Jongco",
+    "Camelot Realty Group": "Rechell Jongco",
+    "Langsam Property Managment": "Rechell Jongco",
+    "Village of Larchmont": "Rechell Jongco", "City Urban Realty": "Rechell Jongco",
+    "Esra Management LLC": "Rechell Jongco",
+    "Rapoport Construction Corp": "Rechell Jongco",
+    "Veritas Property Management": "Rechell Jongco",
+    "M&L Milevoi Realty": "Rechell Jongco",
+    "Scarsdale Home Improvements": "Rechell Jongco",
+    "Kalel Companies": "Rechell Jongco", "Apex Management Group": "Rechell Jongco",
+    "Ivy Property Management": "Rechell Jongco",
+    "JCC Mid Westchester": "Rechell Jongco", "Ventura Land Corp": "Rechell Jongco",
+    "ABC Tank Repair & Lining Inc": "Rechell Jongco", "CDM Smith": "Rechell Jongco",
+    "MDG": "Rechell Jongco", "SKS Enterprises": "Rechell Jongco",
+    "Elite Management LLC": "Rechell Jongco", "Lineland Management": "Rechell Jongco",
+    "MBD New Heights Apts. LP": "Rechell Jongco", "CKC Associates LLC": "Rechell Jongco",
+    "SAP Construction LLC": "Rechell Jongco", "Sassouni Management": "Rechell Jongco",
+    "Sheridan Properties": "Rechell Jongco",
+    "St. John's Espiscopal Hospital": "Rechell Jongco",
+    "Noam Management Group": "Rechell Jongco",
+    "VPH Management Services LLC": "Rechell Jongco",
+    "Librett Real Estate Group": "Rechell Jongco",
+    "Lolo Montague, LLC": "Rechell Jongco",
+    "Blue Woods Management": "Rechell Jongco",
+    "Archer Property Management": "Rechell Jongco",
+    "Aram Gadarigian": "Rechell Jongco", "Novum Properties": "Rechell Jongco",
+    "47 Fort Washington Ave HDFC": "Rechell Jongco",
+    "Markers Capital Partners": "Rechell Jongco",
+    "Homeowner association of 110 Neptune": "Rechell Jongco",
+    "Empire State Equities": "Rechell Jongco",
+    "Orbach Afforable Housing Solutions": "Rechell Jongco",
+    "Infinity Contracting Services": "Rechell Jongco",
+    "Pine Management, Inc.": "Rechell Jongco", "Maria Schwartz": "Rechell Jongco",
+    "Famurb Company LLC": "Rechell Jongco", "Fantis Foods, Inc.": "Rechell Jongco",
+    "Or Trabelsi": "Rechell Jongco", "QN Realty LLC": "Rechell Jongco",
+    "E & G Management": "Rechell Jongco", "Brodsky": "Rechell Jongco",
+    "CG West 181st Street": "Rechell Jongco",
+    "Medallion Real Estate LLC": "Rechell Jongco",
+    "New Aim Realty": "Rechell Jongco",
+    "L & M Development Partners": "Rechell Jongco",
+    "Cornell Pace Inc": "Rechell Jongco",
+    "Solar Realty Management": "Rechell Jongco",
+    "Park Avenue South Managment": "Rechell Jongco",
+    "Atlantic Commons": "Rechell Jongco", "Roni Jesselson": "Rechell Jongco",
+    "Sand Managements": "Rechell Jongco", "The Moinian Group": "Rechell Jongco",
+    "Je Partners Group LLC": "Rechell Jongco",
+    "Don Gringer": "Rechell Jongco", "Annal Management Co., Ltd": "Rechell Jongco",
+    "The Ader Group": "Rechell Jongco",
+    "Jenkins Portfolio Companies LLC": "Rechell Jongco",
+    "JLP Metro Management": "Rechell Jongco",
+    "Magen David Yeshiva": "Rechell Jongco", "Breukelen One LLC": "Rechell Jongco",
+    "Rich Energy Solutions": "Rechell Jongco",
+    "Locust Cove Management": "Rechell Jongco",
+    "Caprice Management Corp": "Rechell Jongco",
+    "Norwax Associates Inc.": "Rechell Jongco",
+    "Medallion Real Estate LLC": "Rechell Jongco",
+}
+
+def get_collector(row):
+    # Check updated customer first, then original customer
+    updated = str(row.get("Updated Customer", "") or "").strip()
+    original = str(row.get("Customer", "") or "").strip()
+    return COLLECTOR_MAP.get(updated, COLLECTOR_MAP.get(original, "")
+)
+
+df["Collector"] = df.apply(get_collector, axis=1)
+
 
 # === SIDEBAR ===
 with st.sidebar:
@@ -532,6 +694,10 @@ with st.sidebar:
         "SA / MA",
         options=["SA", "MA"],
     )
+    collector_filter = st.multiselect(
+        "Collector",
+        options=sorted(df["Collector"].loc[df["Collector"] != ""].unique()),
+    )
 
 
 # Apply filters
@@ -548,6 +714,8 @@ if pm_filter:
     filtered = filtered[filtered["Project Manager"].isin(pm_filter)]
 if sa_ma_filter:
     filtered = filtered[filtered["SA/MA"].isin(sa_ma_filter)]
+if collector_filter:
+    filtered = filtered[filtered["Collector"].isin(collector_filter)]
 
 
 # === MAIN CONTENT ===
@@ -586,7 +754,7 @@ st.markdown(
 )
 
 st.dataframe(
-    filtered[["Customer", "Updated Customer", "Property / Project", "Project Manager", "SA/MA", "Invoice", "Balance", "Date"]].style.format({
+    filtered[["Customer", "Updated Customer", "Collector", "Property / Project", "Project Manager", "SA/MA", "Invoice", "Balance", "Date"]].style.format({
         "Balance": "${:,.2f}",
         "Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
     }),
