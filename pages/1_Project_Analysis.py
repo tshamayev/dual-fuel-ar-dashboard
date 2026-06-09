@@ -54,7 +54,7 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
 conn = st.connection("snowflake")
 
 df = conn.query("""
-    SELECT
+    SELECT /*v2*/
         project_id,
         project_number,
         project_name,
