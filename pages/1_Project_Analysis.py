@@ -119,8 +119,8 @@ with st.sidebar:
         )
 
     # Custom navigation links
-    st.page_link("app.py", label="AR Dashboard")
-    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis")
+    st.page_link("app.py", label="AR Dashboard", icon="📊")
+    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
     st.markdown("---")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
