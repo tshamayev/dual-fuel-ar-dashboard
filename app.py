@@ -6,11 +6,21 @@ from pathlib import Path
 
 # --- Page config ---
 st.set_page_config(
-    page_title="Dual Fuel AR Dashboard",
+    page_title="AR Dashboard — Dual Fuel",
     page_icon="🔥",
     layout="wide",
     initial_sidebar_state="expanded",
 )
+
+# Override sidebar page label
+st.markdown("""
+<style>
+[data-testid="stSidebarNav"] li:first-child a span { visibility: hidden; position: relative; }
+[data-testid="stSidebarNav"] li:first-child a span::after {
+    content: "AR Dashboard"; visibility: visible; position: absolute; left: 0;
+}
+</style>
+""", unsafe_allow_html=True)
 
 # --- Dual Fuel Brand CSS ---
 st.markdown("""
@@ -144,7 +154,6 @@ hr {
 /* === Hide Streamlit branding === */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
-header[data-testid="stHeader"] {visibility: hidden;}
 
 /* === Sidebar logo === */
 .sidebar-logo {
