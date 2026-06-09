@@ -34,6 +34,7 @@ hr { border: none !important; height: 1px !important; background: linear-gradien
 [data-testid="stSidebar"] label { color: #808090 !important; text-transform: uppercase; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 0.8px; }
 .section-label { color: #808090 !important; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px !important; }
 #MainMenu {visibility: hidden;} footer {visibility: hidden;}
+[data-testid="stSidebarNav"] { display: none !important; }
 [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p { color: #e0e0e0; }
 .sidebar-logo { text-align: center; padding: 16px 0 12px 0; border-bottom: 1px solid #1e1e2e; margin-bottom: 24px; }
 .sidebar-logo img { width: 44px; height: 44px; }
@@ -117,11 +118,18 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
+    # Custom navigation links
+    st.page_link("app.py", label="AR Dashboard", icon="📊")
+    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
+    st.markdown("---")
+
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
-    # Project selector
-    projects = sorted(df["Project #"].dropna().unique())
-    selected_project = st.selectbox("Project", options=["All"] + list(projects))
+    # Project selector — use "Number — Name" to distinguish duplicates
+    project_lookup = df.drop_duplicates(subset=["Project ID"])[["Project #", "Project Name", "Project ID"]].dropna(subset=["Project #"])
+    project_lookup["Label"] = project_lookup["Project #"].astype(str) + " — " + project_lookup["Project Name"].fillna("")
+    project_options = sorted(project_lookup["Label"].unique())
+    selected_label = st.selectbox("Project", options=["All"] + project_options)
 
     # Date range
     all_months = sorted(df["Month"].dropna().unique())
@@ -136,10 +144,14 @@ with st.sidebar:
     view_mode = st.radio("View Mode", ["Monthly", "Cumulative"], horizontal=True)
 
 
+# Build display label column for matching
+df["Project Label"] = df["Project #"].astype(str) + " — " + df["Project Name"].fillna("")
+
 # Apply filters
 filtered = df.copy()
+selected_project = selected_label  # alias for readability
 if selected_project != "All":
-    filtered = filtered[filtered["Project #"] == selected_project]
+    filtered = filtered[filtered["Project Label"] == selected_project]
 filtered = filtered[(filtered["Month"] >= date_range[0]) & (filtered["Month"] <= date_range[1])]
 
 
@@ -152,7 +164,7 @@ if selected_project != "All":
         st.markdown(f"## Project {row['Project #']} — {row['Project Name']}")
         st.markdown(f"*{row['Customer']} | {row['Property']} | PM: {row['PM']}*")
     else:
-        st.markdown(f"## Project {selected_project}")
+        st.markdown(f"## {selected_project}")
 else:
     st.markdown("## All Projects")
 
