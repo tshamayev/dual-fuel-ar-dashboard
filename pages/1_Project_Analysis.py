@@ -54,7 +54,7 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
 conn = st.connection("snowflake")
 
 df = conn.query("""
-    SELECT /*v2*/
+    SELECT
         project_id,
         project_number,
         project_name,
@@ -81,7 +81,7 @@ df = conn.query("""
         overbilled_underbilled
     FROM ANALYTICS.GOLD.FCT_PROJECT_MONTHLY_ANALYSIS
     ORDER BY project_number, month_date
-""")
+""", ttl=0)
 
 # Rename columns for display
 df.columns = [c.upper() for c in df.columns]
