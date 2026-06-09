@@ -279,7 +279,7 @@ if not st.session_state.authenticated:
 conn = st.connection("snowflake")
 
 df = conn.query("""
-    SELECT /*v2*/
+    SELECT
         billing_customer_name   AS "Customer",
         property_name           AS "Property / Project",
         invoice_number          AS "Invoice",
@@ -294,7 +294,7 @@ df = conn.query("""
         project_manager         AS "Project Manager"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
     ORDER BY due_date ASC
-""")
+""", ttl=0)
 
 # Clean up department names
 df["Department"] = df["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
@@ -787,7 +787,7 @@ st.markdown(
 st.markdown("### Weekly Snapshots")
 
 snapshot_raw = conn.query("""
-    SELECT /*v2*/
+    SELECT
         snapshot_date,
         aging_bucket,
         aging_bucket_sort,
@@ -798,7 +798,7 @@ snapshot_raw = conn.query("""
         billing_customer_name
     FROM ANALYTICS.GOLD.FCT_AR_INVOICE_SNAPSHOT
     ORDER BY snapshot_date, aging_bucket_sort
-""")
+""", ttl=0)
 
 # Rename columns to match dashboard conventions
 snapshot_raw = snapshot_raw.rename(columns={
