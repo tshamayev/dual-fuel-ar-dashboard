@@ -12,13 +12,10 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Override sidebar page label
+# Hide default sidebar nav (we use custom st.page_link instead)
 st.markdown("""
 <style>
-[data-testid="stSidebarNav"] li:first-child a span { visibility: hidden; position: relative; }
-[data-testid="stSidebarNav"] li:first-child a span::after {
-    content: "AR Dashboard"; visibility: visible; position: absolute; left: 0;
-}
+[data-testid="stSidebarNav"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -679,6 +676,11 @@ with st.sidebar:
             f'</div>',
             unsafe_allow_html=True,
         )
+
+    # Custom navigation links (replaces default sidebar nav)
+    st.page_link("app.py", label="AR Dashboard", icon="📊")
+    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
+    st.markdown("---")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
