@@ -279,7 +279,7 @@ if not st.session_state.authenticated:
 conn = st.connection("snowflake")
 
 df = conn.query("""
-    SELECT
+    SELECT /*v2*/
         billing_customer_name   AS "Customer",
         property_name           AS "Property / Project",
         invoice_number          AS "Invoice",
@@ -787,7 +787,7 @@ st.markdown(
 st.markdown("### Weekly Snapshots")
 
 snapshot_raw = conn.query("""
-    SELECT
+    SELECT /*v2*/
         snapshot_date,
         aging_bucket,
         aging_bucket_sort,
