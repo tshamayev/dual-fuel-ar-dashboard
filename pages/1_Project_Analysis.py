@@ -75,7 +75,7 @@ df = conn.query("""
         monthly_subcontractor_cost::FLOAT    AS monthly_subcontractor_cost,
         monthly_overhead_cost::FLOAT         AS monthly_overhead_cost,
         monthly_other_cost::FLOAT            AS monthly_other_cost,
-        cumulative_invoicing::FLOAT          AS cumulative_invoicing,
+        cumulative_revenue::FLOAT            AS cumulative_revenue,
         cumulative_cost::FLOAT               AS cumulative_cost,
         pct_billed::FLOAT                    AS pct_billed,
         pct_cost::FLOAT                      AS pct_cost,
@@ -96,7 +96,7 @@ df = df.rename(columns={
     "MONTHLY_COST": "Monthly Cost", "MONTHLY_LABOR_COST": "Labor",
     "MONTHLY_MATERIAL_COST": "Material", "MONTHLY_EQUIPMENT_COST": "Equipment",
     "MONTHLY_SUBCONTRACTOR_COST": "Subcontractor", "MONTHLY_OVERHEAD_COST": "Overhead",
-    "MONTHLY_OTHER_COST": "Other", "CUMULATIVE_INVOICING": "Cumulative Invoicing",
+    "MONTHLY_OTHER_COST": "Other", "CUMULATIVE_REVENUE": "Cumulative Revenue",
     "CUMULATIVE_COST": "Cumulative Cost", "PCT_BILLED": "% Billed",
     "PCT_COST": "% Cost", "OVERBILLED_UNDERBILLED": "Over/Under Billed",
 })
@@ -184,7 +184,7 @@ if len(filtered) > 0 and selected_project != "All":
 
     col5, col6 = st.columns(2)
     with col5:
-        st.metric("Total Billed", f"${filtered['Cumulative Invoicing'].iloc[-1]:,.0f}")
+        st.metric("Total Revenue", f"${filtered['Cumulative Revenue'].iloc[-1]:,.0f}")
     with col6:
         st.metric("Total Cost", f"${filtered['Cumulative Cost'].iloc[-1]:,.0f}")
 
@@ -194,7 +194,7 @@ st.divider()
 if len(filtered) > 0:
     filtered["Month Label"] = pd.to_datetime(filtered["Month"]).dt.strftime("%b %Y")
 
-    inv_col = "Cumulative Invoicing" if view_mode == "Cumulative" else "Monthly Invoicing"
+    inv_col = "Cumulative Revenue" if view_mode == "Cumulative" else "Monthly Invoicing"
     cost_col = "Cumulative Cost" if view_mode == "Cumulative" else "Monthly Cost"
 
     # Aggregate if "All" projects — always sum monthly values, then compute cumulative
@@ -202,14 +202,14 @@ if len(filtered) > 0:
         chart_data = filtered.groupby(["Month", "Month Label"], as_index=False).agg({
             "Monthly Invoicing": "sum", "Monthly Cost": "sum"
         }).sort_values("Month")
-        chart_data["Cumulative Invoicing"] = chart_data["Monthly Invoicing"].cumsum()
+        chart_data["Cumulative Revenue"] = chart_data["Monthly Invoicing"].cumsum()
         chart_data["Cumulative Cost"] = chart_data["Monthly Cost"].cumsum()
     else:
         chart_data = filtered
 
-    # --- Monthly Invoicing Chart ---
-    st.markdown('<p class="section-label">Invoicing</p>', unsafe_allow_html=True)
-    st.markdown(f"### {view_mode} Invoicing")
+    # --- Monthly Revenue Chart ---
+    st.markdown('<p class="section-label">Revenue</p>', unsafe_allow_html=True)
+    st.markdown(f"### {view_mode} Revenue")
 
     inv_chart = (
         alt.Chart(chart_data)
@@ -283,6 +283,107 @@ if len(filtered) > 0:
 
     st.divider()
 
+    # --- Profitability Chart (Revenue vs Cost side-by-side bars + margin line) ---
+    st.markdown('<p class="section-label">Profitability</p>', unsafe_allow_html=True)
+    st.markdown(f"### {view_mode} Profitability")
+
+    profit_data = chart_data[["Month", "Month Label", inv_col, cost_col]].copy()
+    profit_data["Gross Profit"] = profit_data[inv_col] - profit_data[cost_col]
+    profit_data["Margin %"] = (
+        (profit_data["Gross Profit"] / profit_data[inv_col] * 100)
+        .where(profit_data[inv_col] != 0, 0)
+        .round(1)
+    )
+
+    # Melt revenue vs cost for grouped bars
+    profit_melted = profit_data.melt(
+        id_vars=["Month", "Month Label"],
+        value_vars=[inv_col, cost_col],
+        var_name="Metric",
+        value_name="Amount",
+    )
+
+    profit_bars = (
+        alt.Chart(profit_melted)
+        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
+        .encode(
+            x=alt.X("Month Label:N", title="Month",
+                     sort=alt.SortField(field="Month", order="ascending"),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+            y=alt.Y("Amount:Q", title="Amount ($)",
+                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090")),
+            color=alt.Color("Metric:N",
+                scale=alt.Scale(domain=[inv_col, cost_col], range=["#3b82f6", "#f59e0b"]),
+                legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#808090")),
+            xOffset="Metric:N",
+            tooltip=[
+                alt.Tooltip("Month Label:N", title="Month"),
+                alt.Tooltip("Metric:N"),
+                alt.Tooltip("Amount:Q", format="$,.2f"),
+            ],
+        )
+        .properties(height=300)
+    )
+
+    st.altair_chart(
+        profit_bars.configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        use_container_width=True,
+    )
+
+    # Margin % line chart
+    st.markdown("### Gross Margin %")
+
+    margin_chart = (
+        alt.Chart(profit_data)
+        .mark_line(point=True, strokeWidth=2, color="#10b981")
+        .encode(
+            x=alt.X("Month Label:N", title="Month",
+                     sort=alt.SortField(field="Month", order="ascending"),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+            y=alt.Y("Margin %:Q", title="Margin %",
+                     axis=alt.Axis(labelColor="#808090", titleColor="#808090")),
+            tooltip=[
+                alt.Tooltip("Month Label:N", title="Month"),
+                alt.Tooltip("Margin %:Q", format=".1f"),
+                alt.Tooltip("Gross Profit:Q", title="Gross Profit", format="$,.0f"),
+            ],
+        )
+        .properties(height=250)
+    )
+
+    margin_text = (
+        alt.Chart(profit_data)
+        .mark_text(dy=-12, fontSize=10, fontWeight="bold", color="#10b981")
+        .encode(
+            x=alt.X("Month Label:N", sort=alt.SortField(field="Month", order="ascending")),
+            y=alt.Y("Margin %:Q"),
+            text=alt.Text("Margin %:Q", format=".1f"),
+        )
+    )
+
+    st.altair_chart(
+        (margin_chart + margin_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        use_container_width=True,
+    )
+
+    # Profitability KPIs (for single project view)
+    if selected_project != "All" and len(chart_data) > 0:
+        total_rev = chart_data[inv_col].iloc[-1] if view_mode == "Cumulative" else chart_data["Monthly Invoicing"].sum()
+        total_cst = chart_data[cost_col].iloc[-1] if view_mode == "Cumulative" else chart_data["Monthly Cost"].sum()
+        total_profit = total_rev - total_cst
+        overall_margin = (total_profit / total_rev * 100) if total_rev != 0 else 0
+
+        pcol1, pcol2, pcol3 = st.columns(3)
+        with pcol1:
+            st.metric("Total Revenue", f"${total_rev:,.0f}")
+        with pcol2:
+            st.metric("Total Cost", f"${total_cst:,.0f}")
+        with pcol3:
+            st.metric("Gross Margin", f"{overall_margin:.1f}%",
+                       delta=f"${total_profit:,.0f}")
+
+    st.divider()
+
     # --- % Billed vs % Cost Chart ---
     if selected_project != "All":
         st.markdown('<p class="section-label">WIP Analysis</p>', unsafe_allow_html=True)
@@ -342,15 +443,15 @@ if len(filtered) > 0:
     st.divider()
     st.markdown('<p class="section-label">Detail</p>', unsafe_allow_html=True)
 
-    display_cols = ["Month Label", "Monthly Invoicing", "Monthly Cost", "Cumulative Invoicing", "Cumulative Cost"]
+    display_cols = ["Month Label", "Monthly Invoicing", "Monthly Cost", "Cumulative Revenue", "Cumulative Cost"]
     if selected_project != "All":
-        display_cols = ["Month Label"] + ["Monthly Invoicing", "Cumulative Invoicing", "Monthly Cost", "Cumulative Cost"]
+        display_cols = ["Month Label"] + ["Monthly Invoicing", "Cumulative Revenue", "Monthly Cost", "Cumulative Cost"]
 
     st.dataframe(
         filtered[display_cols].style.format({
             "Monthly Invoicing": "${:,.2f}",
             "Monthly Cost": "${:,.2f}",
-            "Cumulative Invoicing": "${:,.2f}",
+            "Cumulative Revenue": "${:,.2f}",
             "Cumulative Cost": "${:,.2f}",
         }),
         use_container_width=True,
