@@ -190,6 +190,18 @@ if len(filtered) > 0 and selected_project != "All":
 
 st.divider()
 
+# --- Compact label formatter for chart bar labels ---
+def compact(val):
+    """3867195 → '3.9M', 150200 → '150.2K', 800 → '800'"""
+    if pd.isna(val) or val == 0:
+        return "0"
+    if abs(val) >= 1_000_000:
+        return f"{val / 1_000_000:.1f}M"
+    elif abs(val) >= 1_000:
+        return f"{val / 1_000:.1f}K"
+    else:
+        return f"{val:.0f}"
+
 # --- Charts ---
 if len(filtered) > 0:
     filtered["Month Label"] = pd.to_datetime(filtered["Month"]).dt.strftime("%b %Y")
@@ -210,6 +222,8 @@ if len(filtered) > 0:
     # --- Monthly Revenue Chart ---
     st.markdown('<p class="section-label">Revenue</p>', unsafe_allow_html=True)
     st.markdown(f"### {view_mode} Revenue")
+
+    chart_data["Rev Label"] = chart_data[inv_col].apply(compact)
 
     inv_chart = (
         alt.Chart(chart_data)
@@ -234,7 +248,7 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", sort=alt.SortField(field="Month", order="ascending")),
             y=alt.Y(f"{inv_col}:Q"),
-            text=alt.Text(f"{inv_col}:Q", format="$,.0f"),
+            text=alt.Text("Rev Label:N"),
         )
     )
 
@@ -248,6 +262,8 @@ if len(filtered) > 0:
     # --- Monthly Costs Chart ---
     st.markdown('<p class="section-label">Costs</p>', unsafe_allow_html=True)
     st.markdown(f"### {view_mode} Costs")
+
+    chart_data["Cost Label"] = chart_data[cost_col].apply(compact)
 
     cost_chart = (
         alt.Chart(chart_data)
@@ -272,7 +288,7 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", sort=alt.SortField(field="Month", order="ascending")),
             y=alt.Y(f"{cost_col}:Q"),
-            text=alt.Text(f"{cost_col}:Q", format="$,.0f"),
+            text=alt.Text("Cost Label:N"),
         )
     )
 
@@ -302,6 +318,7 @@ if len(filtered) > 0:
         var_name="Metric",
         value_name="Amount",
     )
+    profit_melted["Bar Label"] = profit_melted["Amount"].apply(compact)
 
     profit_bars = (
         alt.Chart(profit_melted)
@@ -325,8 +342,19 @@ if len(filtered) > 0:
         .properties(height=300)
     )
 
+    profit_text = (
+        alt.Chart(profit_melted)
+        .mark_text(dy=-10, fontSize=9, fontWeight="bold", color="#FFFFFF")
+        .encode(
+            x=alt.X("Month Label:N", sort=alt.SortField(field="Month", order="ascending")),
+            y=alt.Y("Amount:Q"),
+            text=alt.Text("Bar Label:N"),
+            xOffset="Metric:N",
+        )
+    )
+
     st.altair_chart(
-        profit_bars.configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (profit_bars + profit_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
