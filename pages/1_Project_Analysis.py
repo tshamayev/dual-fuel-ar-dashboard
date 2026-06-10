@@ -29,7 +29,8 @@ h3 { color: #FFFFFF !important; font-weight: 600 !important; }
 a.headerLink, h1 a, h2 a, h3 a { display: none !important; }
 hr { border: none !important; height: 1px !important; background: linear-gradient(90deg, transparent, #C30017, transparent) !important; margin: 24px 0 !important; }
 [data-testid="stDataFrame"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; overflow: hidden; }
-[data-testid="stVegaLiteChart"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px 20px; overflow: visible; }
+[data-testid="stVegaLiteChart"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px; overflow: hidden; box-sizing: border-box; }
+[data-testid="stVegaLiteChart"] > div { margin-right: 12px; }
 [data-testid="stMarkdownContainer"] p { color: #e0e0e0; }
 [data-testid="stSidebar"] label { color: #808090 !important; text-transform: uppercase; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 0.8px; }
 .section-label { color: #808090 !important; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px !important; }
