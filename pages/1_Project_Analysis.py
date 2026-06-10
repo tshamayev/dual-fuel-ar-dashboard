@@ -239,7 +239,7 @@ if len(filtered) > 0:
                 alt.Tooltip(f"{inv_col}:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
+        .properties(height=300)
     )
 
     inv_text = (
@@ -253,7 +253,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (inv_chart + inv_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (inv_chart + inv_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -279,7 +279,7 @@ if len(filtered) > 0:
                 alt.Tooltip(f"{cost_col}:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
+        .properties(height=300)
     )
 
     cost_text = (
@@ -293,7 +293,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (cost_chart + cost_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (cost_chart + cost_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -339,7 +339,7 @@ if len(filtered) > 0:
                 alt.Tooltip("Amount:Q", format="$,.2f"),
             ],
         )
-        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
+        .properties(height=300)
     )
 
     profit_text = (
@@ -354,7 +354,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (profit_bars + profit_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (profit_bars + profit_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -376,7 +376,7 @@ if len(filtered) > 0:
                 alt.Tooltip("Gross Profit:Q", title="Gross Profit", format="$,.0f"),
             ],
         )
-        .properties(height=250, padding={"top": 25, "right": 40, "left": 20})
+        .properties(height=250)
     )
 
     margin_text = (
@@ -390,7 +390,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (margin_chart + margin_text).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (margin_chart + margin_text).properties(padding={"top": 25, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -446,7 +446,7 @@ if len(filtered) > 0:
                     alt.Tooltip("Percentage:Q", format=".1f"),
                 ],
             )
-            .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
+            .properties(height=300, padding={"top": 20, "right": 40, "left": 20})
         )
 
         st.altair_chart(
