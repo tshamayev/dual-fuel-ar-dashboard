@@ -861,7 +861,7 @@ if len(snapshot_raw) > 0:
                 alt.Tooltip("Amount:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=380, padding={"top": 30, "right": 40, "left": 20})
+        .properties(height=380)
     )
 
     totals = snapshot_df.groupby(["Week Label", "Week"], as_index=False)["Amount"].sum()
@@ -879,6 +879,7 @@ if len(snapshot_raw) > 0:
 
     combined = (
         (chart + text)
+        .properties(padding={"top": 30, "right": 40, "left": 20})
         .configure_view(strokeWidth=0)
         .configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e")
     )
