@@ -231,15 +231,15 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", title="Month",
                      sort=alt.SortField(field="Month", order="ascending"),
-                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
             y=alt.Y(f"{inv_col}:Q", title="Amount ($)",
-                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
                 alt.Tooltip(f"{inv_col}:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=300)
+        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
     )
 
     inv_text = (
@@ -271,15 +271,15 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", title="Month",
                      sort=alt.SortField(field="Month", order="ascending"),
-                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
             y=alt.Y(f"{cost_col}:Q", title="Amount ($)",
-                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
                 alt.Tooltip(f"{cost_col}:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=300)
+        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
     )
 
     cost_text = (
@@ -326,12 +326,12 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", title="Month",
                      sort=alt.SortField(field="Month", order="ascending"),
-                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
             y=alt.Y("Amount:Q", title="Amount ($)",
-                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
             color=alt.Color("Metric:N",
                 scale=alt.Scale(domain=[inv_col, cost_col], range=["#3b82f6", "#f59e0b"]),
-                legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#808090")),
+                legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#FFFFFF", titleFontWeight="bold", labelLimit=300, columnPadding=20)),
             xOffset="Metric:N",
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
@@ -339,7 +339,7 @@ if len(filtered) > 0:
                 alt.Tooltip("Amount:Q", format="$,.2f"),
             ],
         )
-        .properties(height=300)
+        .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
     )
 
     profit_text = (
@@ -367,16 +367,16 @@ if len(filtered) > 0:
         .encode(
             x=alt.X("Month Label:N", title="Month",
                      sort=alt.SortField(field="Month", order="ascending"),
-                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
             y=alt.Y("Margin %:Q", title="Margin %",
-                     axis=alt.Axis(labelColor="#808090", titleColor="#808090")),
+                     axis=alt.Axis(labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
                 alt.Tooltip("Margin %:Q", format=".1f"),
                 alt.Tooltip("Gross Profit:Q", title="Gross Profit", format="$,.0f"),
             ],
         )
-        .properties(height=250)
+        .properties(height=250, padding={"top": 25, "right": 40, "left": 20})
     )
 
     margin_text = (
@@ -434,19 +434,19 @@ if len(filtered) > 0:
             .encode(
                 x=alt.X("Month Label:N", title="Month",
                          sort=alt.SortField(field="Month", order="ascending"),
-                         axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090")),
+                         axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
                 y=alt.Y("Percentage:Q", title="%",
-                         axis=alt.Axis(labelColor="#808090", titleColor="#808090")),
+                         axis=alt.Axis(labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
                 color=alt.Color("Metric:N",
                     scale=alt.Scale(domain=["% Billed", "% Cost"], range=["#3b82f6", "#f59e0b"]),
-                    legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#808090")),
+                    legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#FFFFFF", titleFontWeight="bold", labelLimit=300, columnPadding=20)),
                 tooltip=[
                     alt.Tooltip("Month Label:N", title="Month"),
                     alt.Tooltip("Metric:N"),
                     alt.Tooltip("Percentage:Q", format=".1f"),
                 ],
             )
-            .properties(height=300)
+            .properties(height=300, padding={"top": 30, "right": 40, "left": 20})
         )
 
         st.altair_chart(
