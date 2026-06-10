@@ -842,17 +842,17 @@ if len(snapshot_raw) > 0:
                 "Week Label:N",
                 title="Week Ending",
                 sort=alt.SortField(field="Week", order="ascending"),
-                axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#808090"),
+                axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10),
             ),
             y=alt.Y(
                 "Amount:Q",
                 title="AR ($)",
-                axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#808090"),
+                axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15),
             ),
             color=alt.Color(
                 "Aging Bucket:N",
                 scale=color_scale,
-                legend=alt.Legend(title="Aging Bucket", orient="top", labelColor="#c0c0c0", titleColor="#808090"),
+                legend=alt.Legend(title="Aging Bucket", orient="top", labelColor="#c0c0c0", titleColor="#FFFFFF", titleFontWeight="bold", labelLimit=300, columnPadding=20),
             ),
             order=alt.Order("aging_bucket_sort:Q"),
             tooltip=[
@@ -861,7 +861,7 @@ if len(snapshot_raw) > 0:
                 alt.Tooltip("Amount:Q", title="Amount", format="$,.2f"),
             ],
         )
-        .properties(height=380)
+        .properties(height=380, padding={"top": 30, "right": 40, "left": 20})
     )
 
     totals = snapshot_df.groupby(["Week Label", "Week"], as_index=False)["Amount"].sum()
