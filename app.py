@@ -115,8 +115,8 @@ hr {
     background-color: #141422;
     border: 1px solid #2a2a3e;
     border-radius: 8px;
-    padding: 16px;
-    overflow: hidden;
+    padding: 16px 20px;
+    overflow: visible;
 }
 
 /* === General text === */
