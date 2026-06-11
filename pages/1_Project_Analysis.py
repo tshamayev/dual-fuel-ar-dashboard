@@ -126,8 +126,13 @@ with st.sidebar:
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
+    include_controls = st.toggle("Include Controls", value=True)
+
     # Project selector — use "Number — Name" to distinguish duplicates
-    project_lookup = df.drop_duplicates(subset=["Project ID"])[["Project #", "Project Name", "Project ID"]].dropna(subset=["Project #"])
+    project_base = df.copy()
+    if not include_controls:
+        project_base = project_base[~project_base["Department"].isin(["Controls", "DFC - Controls"])]
+    project_lookup = project_base.drop_duplicates(subset=["Project ID"])[["Project #", "Project Name", "Project ID"]].dropna(subset=["Project #"])
     project_lookup["Label"] = project_lookup["Project #"].astype(str) + " — " + project_lookup["Project Name"].fillna("")
     project_options = sorted(project_lookup["Label"].unique())
     selected_label = st.selectbox("Project", options=["All"] + project_options)
@@ -154,6 +159,10 @@ selected_project = selected_label  # alias for readability
 if selected_project != "All":
     filtered = filtered[filtered["Project Label"] == selected_project]
 filtered = filtered[(filtered["Month"] >= date_range[0]) & (filtered["Month"] <= date_range[1])]
+
+# Controls department filter
+if not include_controls:
+    filtered = filtered[~filtered["Department"].isin(["Controls", "DFC - Controls"])]
 
 
 # === MAIN CONTENT ===
