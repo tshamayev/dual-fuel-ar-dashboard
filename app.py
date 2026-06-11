@@ -285,7 +285,8 @@ df = conn.query("""
         property_name           AS "Property / Project",
         invoice_number          AS "Invoice",
         outstanding_balance::FLOAT AS "Balance",
-        due_date                AS "Date",
+        invoice_date            AS "Invoice Date",
+        due_date                AS "Due Date",
         aging_bucket            AS "Aging Bucket",
         department_name         AS "Department",
         sa_type                 AS "SA Type",
@@ -769,9 +770,10 @@ st.markdown(
 )
 
 st.dataframe(
-    filtered[["Customer", "Updated Customer", "Collector", "Property / Project", "Project Manager", "SA/MA", "Invoice", "Balance", "Date"]].style.format({
+    filtered[["Customer", "Updated Customer", "Collector", "Property / Project", "Project Manager", "SA/MA", "Invoice", "Balance", "Invoice Date", "Due Date"]].style.format({
         "Balance": "${:,.2f}",
-        "Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
+        "Invoice Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else "",
+        "Due Date": lambda x: pd.to_datetime(x).strftime("%m/%d/%Y") if pd.notna(x) else ""
     }),
     use_container_width=True,
     height=300,
