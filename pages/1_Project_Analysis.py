@@ -260,9 +260,9 @@ if len(filtered) > 0:
 
     st.divider()
 
-    # --- Monthly Costs Chart ---
-    st.markdown('<p class="section-label">Costs</p>', unsafe_allow_html=True)
-    st.markdown(f"### {view_mode} Costs")
+    # --- Monthly Direct Cost Chart ---
+    st.markdown('<p class="section-label">Direct Cost</p>', unsafe_allow_html=True)
+    st.markdown(f"### {view_mode} Direct Cost")
 
     chart_data["Cost Label"] = chart_data[cost_col].apply(compact)
 
@@ -300,57 +300,48 @@ if len(filtered) > 0:
 
     st.divider()
 
-    # --- Profitability Chart (Revenue vs Cost side-by-side bars + margin line) ---
-    st.markdown('<p class="section-label">Profitability</p>', unsafe_allow_html=True)
-    st.markdown(f"### {view_mode} Profitability")
+    # --- Direct Monthly Profitability Chart ---
+    st.markdown('<p class="section-label">Direct Profitability</p>', unsafe_allow_html=True)
+    st.markdown(f"### Direct {view_mode} Profitability")
 
     profit_data = chart_data[["Month", "Month Label", inv_col, cost_col]].copy()
-    profit_data["Gross Profit"] = profit_data[inv_col] - profit_data[cost_col]
+    profit_data["Direct Profit"] = profit_data[inv_col] - profit_data[cost_col]
     profit_data["Margin %"] = (
-        (profit_data["Gross Profit"] / profit_data[inv_col] * 100)
+        (profit_data["Direct Profit"] / profit_data[inv_col] * 100)
         .where(profit_data[inv_col] != 0, 0)
         .round(1)
     )
 
-    # Melt revenue vs cost for grouped bars
-    profit_melted = profit_data.melt(
-        id_vars=["Month", "Month Label"],
-        value_vars=[inv_col, cost_col],
-        var_name="Metric",
-        value_name="Amount",
-    )
-    profit_melted["Bar Label"] = profit_melted["Amount"].apply(compact)
+    # Single green bar showing profit (revenue - cost)
+    profit_data["Profit Label"] = profit_data["Direct Profit"].apply(compact)
 
     profit_bars = (
-        alt.Chart(profit_melted)
-        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3)
+        alt.Chart(profit_data)
+        .mark_bar(cornerRadiusTopLeft=3, cornerRadiusTopRight=3, color="#10b981")
         .encode(
             x=alt.X("Month Label:N", title="Month",
                      sort=alt.SortField(field="Month", order="ascending"),
                      axis=alt.Axis(labelAngle=-45, labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=10)),
-            y=alt.Y("Amount:Q", title="Amount ($)",
+            y=alt.Y("Direct Profit:Q", title="Profit ($)",
                      axis=alt.Axis(format="$,.0f", labelColor="#808090", titleColor="#FFFFFF", titleFontWeight="bold", titlePadding=15)),
-            color=alt.Color("Metric:N",
-                scale=alt.Scale(domain=[inv_col, cost_col], range=["#3b82f6", "#f59e0b"]),
-                legend=alt.Legend(orient="top", labelColor="#c0c0c0", titleColor="#FFFFFF", titleFontWeight="bold", labelLimit=300, columnPadding=20)),
-            xOffset="Metric:N",
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
-                alt.Tooltip("Metric:N"),
-                alt.Tooltip("Amount:Q", format="$,.2f"),
+                alt.Tooltip(f"{inv_col}:Q", title="Revenue", format="$,.2f"),
+                alt.Tooltip(f"{cost_col}:Q", title="Cost", format="$,.2f"),
+                alt.Tooltip("Direct Profit:Q", title="Profit", format="$,.2f"),
+                alt.Tooltip("Margin %:Q", title="Margin %", format=".1f"),
             ],
         )
         .properties(height=300)
     )
 
     profit_text = (
-        alt.Chart(profit_melted)
-        .mark_text(dy=-10, fontSize=9, fontWeight="bold", color="#FFFFFF")
+        alt.Chart(profit_data)
+        .mark_text(dy=-10, fontSize=10, fontWeight="bold", color="#FFFFFF")
         .encode(
             x=alt.X("Month Label:N", sort=alt.SortField(field="Month", order="ascending")),
-            y=alt.Y("Amount:Q"),
-            text=alt.Text("Bar Label:N"),
-            xOffset="Metric:N",
+            y=alt.Y("Direct Profit:Q"),
+            text=alt.Text("Profit Label:N"),
         )
     )
 
@@ -360,7 +351,7 @@ if len(filtered) > 0:
     )
 
     # Margin % line chart
-    st.markdown("### Gross Margin %")
+    st.markdown("### Direct Margin %")
 
     margin_chart = (
         alt.Chart(profit_data)
@@ -374,7 +365,7 @@ if len(filtered) > 0:
             tooltip=[
                 alt.Tooltip("Month Label:N", title="Month"),
                 alt.Tooltip("Margin %:Q", format=".1f"),
-                alt.Tooltip("Gross Profit:Q", title="Gross Profit", format="$,.0f"),
+                alt.Tooltip("Direct Profit:Q", title="Direct Profit", format="$,.0f"),
             ],
         )
         .properties(height=250)
@@ -408,7 +399,7 @@ if len(filtered) > 0:
         with pcol2:
             st.metric("Total Cost", f"${total_cst:,.0f}")
         with pcol3:
-            st.metric("Gross Margin", f"{overall_margin:.1f}%",
+            st.metric("Direct Margin", f"{overall_margin:.1f}%",
                        delta=f"${total_profit:,.0f}")
 
     st.divider()
