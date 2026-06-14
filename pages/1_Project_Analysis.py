@@ -126,12 +126,27 @@ with st.sidebar:
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
-    include_controls = st.toggle("Include Controls", value=True)
+    # Department toggles
+    st.markdown('<p class="section-label">Departments</p>', unsafe_allow_html=True)
+    inc_installation = st.toggle("Installation", value=True)
+    inc_controls = st.toggle("Controls", value=True)
+    inc_service = st.toggle("Service", value=True)
+    inc_boiler = st.toggle("Boiler Repairs", value=True)
+
+    excluded_depts = []
+    if not inc_installation:
+        excluded_depts += ["Installation", "DFC - Installation"]
+    if not inc_controls:
+        excluded_depts += ["Controls", "DFC - Controls"]
+    if not inc_service:
+        excluded_depts += ["Service"]
+    if not inc_boiler:
+        excluded_depts += ["Boiler Repairs"]
 
     # Project selector — use "Number — Name" to distinguish duplicates
     project_base = df.copy()
-    if not include_controls:
-        project_base = project_base[~project_base["Department"].isin(["Controls", "DFC - Controls"])]
+    if excluded_depts:
+        project_base = project_base[~project_base["Department"].isin(excluded_depts)]
     project_lookup = project_base.drop_duplicates(subset=["Project ID"])[["Project #", "Project Name", "Project ID"]].dropna(subset=["Project #"])
     project_lookup["Label"] = project_lookup["Project #"].astype(str) + " — " + project_lookup["Project Name"].fillna("")
     project_options = sorted(project_lookup["Label"].unique())
@@ -160,9 +175,9 @@ if selected_project != "All":
     filtered = filtered[filtered["Project Label"] == selected_project]
 filtered = filtered[(filtered["Month"] >= date_range[0]) & (filtered["Month"] <= date_range[1])]
 
-# Controls department filter
-if not include_controls:
-    filtered = filtered[~filtered["Department"].isin(["Controls", "DFC - Controls"])]
+# Department filter
+if excluded_depts:
+    filtered = filtered[~filtered["Department"].isin(excluded_depts)]
 
 
 # === MAIN CONTENT ===
