@@ -1,6 +1,12 @@
 import streamlit as st
 import pandas as pd
 import altair as alt
+import os
+import sys
+
+# Make the repo root importable so `import auth` works from the pages/ folder.
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import auth
 
 st.set_page_config(
     page_title="Project Analysis — Dual Fuel",
@@ -29,8 +35,13 @@ h3 { color: #FFFFFF !important; font-weight: 600 !important; }
 a.headerLink, h1 a, h2 a, h3 a { display: none !important; }
 hr { border: none !important; height: 1px !important; background: linear-gradient(90deg, transparent, #C30017, transparent) !important; margin: 24px 0 !important; }
 [data-testid="stDataFrame"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; overflow: hidden; }
-[data-testid="stVegaLiteChart"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px; overflow: hidden; box-sizing: border-box; }
-[data-testid="stVegaLiteChart"] > div { margin: 0 16px; }
+[data-testid="stVegaLiteChart"] { background-color: #141422; border: 1px solid #2a2a3e; border-radius: 8px; padding: 16px; overflow: hidden; box-sizing: border-box; display: flex; justify-content: center; }
+[data-testid="stVegaLiteChart"] > div { margin: 0 auto; }
+span[data-testid="stIconMaterial"], [data-testid="stIconMaterial"], .material-icons, .material-icons-outlined, .material-symbols-outlined, .material-symbols-rounded { font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important; }
+iframe[title="streamlit_cookies_controller.cookie_controller"] { display: none !important; height: 0 !important; }
+[data-testid="stStatusWidget"] { display: none !important; }
+[class*="viewerBadge"] { display: none !important; }
+button[title="Manage app"], [data-testid="manageAppButton"] { display: none !important; }
 [data-testid="stMarkdownContainer"] p { color: #e0e0e0; }
 [data-testid="stSidebar"] label { color: #808090 !important; text-transform: uppercase; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 0.8px; }
 .section-label { color: #808090 !important; font-size: 0.72rem !important; font-weight: 600 !important; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px !important; }
@@ -46,10 +57,21 @@ hr { border: none !important; height: 1px !important; background: linear-gradien
 """, unsafe_allow_html=True)
 
 
-# --- Login gate (shared session state) ---
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Please log in from the main AR Dashboard page.")
-    st.stop()
+# --- Login gate (shared session state + cookie auto-login) ---
+if "authenticated" not in st.session_state:
+    st.session_state.authenticated = False
+
+controller = auth.get_controller()
+auth.try_cookie_login(controller)
+
+if not st.session_state.authenticated:
+    # On a hard refresh the cookie component hasn't reported back on the first
+    # run yet. Wait one rerun so a valid 7-day cookie can log the user in on
+    # this page instead of bouncing them. If the component isn't available, or
+    # there's still no valid session once cookies load, go to the login page.
+    if controller is not None and not auth.cookies_loaded():
+        st.stop()
+    st.switch_page("app.py")
 
 
 # --- Data ---
@@ -122,6 +144,14 @@ with st.sidebar:
     # Custom navigation links
     st.page_link("app.py", label="AR Dashboard", icon="📊")
     st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
+
+    # Session controls
+    _user = st.session_state.get("username", "")
+    if _user:
+        st.caption(f"Signed in as {_user}")
+    if st.button("Sign out", use_container_width=True):
+        auth.sign_out(controller)
+
     st.markdown("---")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
@@ -278,7 +308,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (inv_chart + inv_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (inv_chart + inv_text).properties(padding={"top": 30, "right": 20, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -318,7 +348,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (cost_chart + cost_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (cost_chart + cost_text).properties(padding={"top": 30, "right": 20, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -370,7 +400,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (profit_bars + profit_text).properties(padding={"top": 30, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (profit_bars + profit_text).properties(padding={"top": 30, "right": 20, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -406,7 +436,7 @@ if len(filtered) > 0:
     )
 
     st.altair_chart(
-        (margin_chart + margin_text).properties(padding={"top": 25, "right": 40, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
+        (margin_chart + margin_text).properties(padding={"top": 25, "right": 20, "left": 20}).configure_view(strokeWidth=0).configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e"),
         use_container_width=True,
     )
 
@@ -462,7 +492,7 @@ if len(filtered) > 0:
                     alt.Tooltip("Percentage:Q", format=".1f"),
                 ],
             )
-            .properties(height=300, padding={"top": 20, "right": 40, "left": 20})
+            .properties(height=300, padding={"top": 20, "right": 20, "left": 20})
         )
 
         st.altair_chart(
