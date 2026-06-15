@@ -752,6 +752,20 @@ with st.sidebar:
     if st.button("Sign out", use_container_width=True):
         auth.sign_out(controller)
 
+    # TEMP diagnostic — confirms why persistent login is on/off. Remove once working.
+    _d_ctrl = controller is not None
+    _d_secret = bool(auth.cookie_secret())
+    _d_cookie = False
+    if _d_ctrl:
+        try:
+            _d_cookie = bool(controller.get(auth.COOKIE_NAME))
+        except Exception:
+            pass
+    st.caption(
+        f"persist-login · component {'✅' if _d_ctrl else '❌'} · "
+        f"secret {'✅' if _d_secret else '❌'} · cookie {'✅' if _d_cookie else '❌'}"
+    )
+
     st.markdown("---")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
