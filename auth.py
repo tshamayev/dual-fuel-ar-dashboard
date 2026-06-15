@@ -11,7 +11,7 @@ On a successful login we store a browser cookie containing a *signed* token:
 
 where payload = {"u": <username>, "exp": <unix-expiry>}. The signature is an
 HMAC-SHA256 over the payload using a server-side secret that never reaches the
-browser (``st.secrets["auth"]["cookie_secret"]``), so the cookie cannot be
+browser (``st.secrets["cookie_auth"]["secret"]``), so the cookie cannot be
 forged or modified by the client. The password itself is never stored anywhere
 on the client.
 
@@ -37,9 +37,14 @@ SESSION_DAYS = 7                  # how long a login lasts before re-auth
 
 
 def cookie_secret():
-    """Return the HMAC signing secret, or None if it isn't configured."""
+    """Return the HMAC signing secret, or None if it isn't configured.
+
+    NOTE: we use a custom [cookie_auth] secrets section, NOT [auth]. The [auth]
+    section is reserved by Streamlit for its native OIDC login (st.login) — using
+    it here would trigger Streamlit's auth/CORS/XSRF handling and can break the app.
+    """
     try:
-        return st.secrets["auth"]["cookie_secret"]
+        return st.secrets["cookie_auth"]["secret"]
     except Exception:
         return None
 
