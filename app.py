@@ -4,6 +4,8 @@ import altair as alt
 import base64
 from pathlib import Path
 
+import auth
+
 # --- Page config ---
 st.set_page_config(
     page_title="AR Dashboard — Dual Fuel",
@@ -118,9 +120,13 @@ hr {
     padding: 16px;
     overflow: hidden;
     box-sizing: border-box;
+    display: flex;
+    justify-content: center;
 }
+/* Center the chart inside its bordered box (the old `margin: 0 16px` stacked
+   on top of the container padding and pushed the chart off-center). */
 [data-testid="stVegaLiteChart"] > div {
-    margin: 0 16px;
+    margin: 0 auto;
 }
 
 /* === General text === */
@@ -155,6 +161,29 @@ hr {
 /* === Hide Streamlit branding === */
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
+/* Hide the Community Cloud status/badge chrome (best-effort). Note: the
+   bottom-right "Manage app" button is only visible to people with write access
+   to the GitHub repo, so anonymous viewers never see or can use it. */
+[data-testid="stStatusWidget"] { display: none !important; }
+[class*="viewerBadge"] { display: none !important; }
+button[title="Manage app"], [data-testid="manageAppButton"] { display: none !important; }
+/* Hide the (invisible) cookie-controller component iframe so it takes no space */
+iframe[title="streamlit_cookies_controller.cookie_controller"] {
+    display: none !important;
+    height: 0 !important;
+}
+
+/* === Restore Material icon font ===
+   The global `* { font-family: Inter !important }` rule above also lands on
+   Streamlit's Material icons, which makes the sidebar collapse control render
+   its ligature name ("keyboard_double_arrow_left") as literal text. Re-assert
+   the icon font on icon elements so the arrow shows correctly. */
+span[data-testid="stIconMaterial"],
+[data-testid="stIconMaterial"],
+.material-icons, .material-icons-outlined,
+.material-symbols-outlined, .material-symbols-rounded {
+    font-family: 'Material Symbols Rounded', 'Material Symbols Outlined', 'Material Icons' !important;
+}
 
 /* === Sidebar logo === */
 .sidebar-logo {
@@ -242,11 +271,32 @@ footer {visibility: hidden;}
 """, unsafe_allow_html=True)
 
 
-# --- Login gate ---
+# --- Auth state + cookie-based auto-login ---
 if "authenticated" not in st.session_state:
     st.session_state.authenticated = False
 
+# Cookie controller renders on every run (login + dashboard) so we can both
+# read the "stay logged in" cookie and clear it on sign-out. Falls back to None
+# if the component can't load — the app still works, just without persistence.
+controller = auth.get_controller()
+auth.try_cookie_login(controller)
+
 if not st.session_state.authenticated:
+    # On the login screen, hide the (empty, non-functional) sidebar and its
+    # collapse/expand control so it reads as a clean login page.
+    st.markdown(
+        """
+        <style>
+        [data-testid="stSidebar"],
+        [data-testid="stSidebarCollapsedControl"],
+        [data-testid="collapsedControl"],
+        [data-testid="stSidebarCollapseButton"],
+        [data-testid="stAppViewContainer"] > section:first-child { display: none !important; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # Centered login using markdown container
     flame_path = Path(__file__).parent / "Flame.png"
     flame_html = ""
@@ -258,7 +308,7 @@ if not st.session_state.authenticated:
         f'<div class="login-wrap">'
         f'{flame_html}'
         f'<p class="login-title">Dual Fuel</p>'
-        f'<p class="login-sub">AR Dashboard</p>'
+        f'<p class="login-sub">Sign In</p>'
         f'</div>',
         unsafe_allow_html=True,
     )
@@ -270,6 +320,8 @@ if not st.session_state.authenticated:
             users = st.secrets["users"]
             if username in users and users[username] == password:
                 st.session_state.authenticated = True
+                st.session_state.username = username
+                auth.issue_cookie(controller, username)
                 st.rerun()
             else:
                 st.error("Invalid username or password")
@@ -685,6 +737,14 @@ with st.sidebar:
     # Custom navigation links (replaces default sidebar nav)
     st.page_link("app.py", label="AR Dashboard", icon="📊")
     st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
+
+    # Session controls
+    _user = st.session_state.get("username", "")
+    if _user:
+        st.caption(f"Signed in as {_user}")
+    if st.button("Sign out", use_container_width=True):
+        auth.sign_out(controller)
+
     st.markdown("---")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
@@ -885,10 +945,11 @@ if len(snapshot_raw) > 0:
 
     combined = (
         (chart + text)
-        .properties(padding={"top": 30, "right": 40, "left": 20})
+        .properties(padding={"top": 30, "right": 20, "left": 20, "bottom": 5})
         .configure_view(strokeWidth=0)
         .configure_axis(gridColor="#1e1e2e", domainColor="#2a2a3e")
     )
     st.altair_chart(combined, use_container_width=True)
 else:
     st.info("No snapshot data yet. The first snapshot will appear after Friday at 5 PM.")
+# end of app.py
