@@ -1,6 +1,20 @@
+# Streamlit configuration — Dual Fuel AR Dashboard
+
 [theme]
 base = "dark"
 primaryColor = "#C30017"
 backgroundColor = "#000000"
 secondaryBackgroundColor = "#141422"
 textColor = "#FFFFFF"
+
+[client]
+# Minimize the in-app toolbar (hides the developer/deploy options for viewers).
+toolbarMode = "minimal"
+
+# Do not surface Python tracebacks to viewers — they can leak query details or
+# secrets on this financial dashboard. As the owner you can still read full logs
+# via "Manage app" on Streamlit Community Cloud.
+showErrorDetails = "none"
+
+[browser]
+gatherUsageStats = false
