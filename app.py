@@ -281,6 +281,13 @@ if "authenticated" not in st.session_state:
 controller = auth.get_controller()
 auth.try_cookie_login(controller)
 
+# Write the persistent-login cookie on the run right AFTER a successful login —
+# i.e. a run that renders to completion and isn't aborted by st.rerun(). If we
+# set it in the same run as the rerun, the component's cookie write is dropped
+# and nothing persists across refreshes.
+if st.session_state.authenticated and st.session_state.pop("_issue_cookie", False):
+    auth.issue_cookie(controller, st.session_state.get("username", ""))
+
 if not st.session_state.authenticated:
     # On the login screen, hide the (empty, non-functional) sidebar and its
     # collapse/expand control so it reads as a clean login page.
@@ -321,7 +328,7 @@ if not st.session_state.authenticated:
             if username in users and users[username] == password:
                 st.session_state.authenticated = True
                 st.session_state.username = username
-                auth.issue_cookie(controller, username)
+                st.session_state["_issue_cookie"] = True
                 st.rerun()
             else:
                 st.error("Invalid username or password")
