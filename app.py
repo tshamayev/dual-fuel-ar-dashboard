@@ -355,7 +355,7 @@ df = conn.query("""
         project_manager         AS "Project Manager"
     FROM ANALYTICS.GOLD.FCT_INVOICE_OPEN
     ORDER BY due_date ASC
-""", ttl=0)
+""", ttl=3600)  # cache 1 hour; "Refresh data" forces a fresh pull
 
 # Clean up department names
 df["Department"] = df["Department"].str.replace(r"^DFC\s*-\s*", "", regex=True)
@@ -744,27 +744,17 @@ with st.sidebar:
     # Custom navigation links (replaces default sidebar nav)
     st.page_link("app.py", label="AR Dashboard", icon="📊")
     st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
+    st.page_link("pages/2_Project_Costs.py", label="Project Costs", icon="💰")
 
     # Session controls
     _user = st.session_state.get("username", "")
     if _user:
         st.caption(f"Signed in as {_user}")
+    if st.button("🔄 Refresh data", use_container_width=True):
+        st.cache_data.clear()  # force the next queries to re-hit Snowflake
+        st.rerun()
     if st.button("Sign out", use_container_width=True):
         auth.sign_out(controller)
-
-    # TEMP diagnostic — confirms why persistent login is on/off. Remove once working.
-    _d_ctrl = controller is not None
-    _d_secret = bool(auth.cookie_secret())
-    _d_cookie = False
-    if _d_ctrl:
-        try:
-            _d_cookie = bool(controller.get(auth.COOKIE_NAME))
-        except Exception:
-            pass
-    st.caption(
-        f"persist-login · component {'✅' if _d_ctrl else '❌'} · "
-        f"secret {'✅' if _d_secret else '❌'} · cookie {'✅' if _d_cookie else '❌'}"
-    )
 
     st.markdown("---")
 
@@ -887,7 +877,7 @@ snapshot_raw = conn.query("""
         billing_customer_name
     FROM ANALYTICS.GOLD.FCT_AR_INVOICE_SNAPSHOT
     ORDER BY snapshot_date, aging_bucket_sort
-""", ttl=0)
+""", ttl=3600)  # cache 1 hour; "Refresh data" forces a fresh pull
 
 # Rename columns to match dashboard conventions
 snapshot_raw = snapshot_raw.rename(columns={
