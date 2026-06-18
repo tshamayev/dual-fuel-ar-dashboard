@@ -194,11 +194,6 @@ with k3:
     oub = sel['over_under_billed']
     label = "Over Billed (WIP)" if pd.notna(oub) and oub >= 0 else "Under Billed (WIP)"
     st.metric(label, f"${abs(oub):,.2f}" if pd.notna(oub) else "—")
-st.caption(
-    "Open AR and Revenue Billed match BuildOps exactly. Over/Under Billed shown here is the "
-    "WIP earned-value figure from FCT_WIP_STATUS — BuildOps' Finance-tab \"Over Billed\" uses a "
-    "different internal calc we haven't reproduced yet."
-)
 
 st.divider()
 
@@ -241,12 +236,6 @@ st.dataframe(
     }),
     use_container_width=True, hide_index=True,
 )
-st.caption(
-    "Budget (Starting / Change Orders / Updated) and Actual Costs match BuildOps. "
-    "Committed Costs is an open-PO estimate (ordered − received) and is approximate pending "
-    "BuildOps' exact committed formula."
-)
-
 st.divider()
 
 # --- Drill-down tree: Cost Type > Phase > Department > Cost Code > line items ---
@@ -310,5 +299,4 @@ else:
     parts.append('</div>')
     st.markdown("".join(parts), unsafe_allow_html=True)
 
-st.caption("Amber = Committed (open PO lines, approximate). Green = Actual (cost lines; ties to BuildOps). "
-           "Click any row to expand: Cost Type ▸ Phase ▸ Department ▸ Cost Code ▸ line items.")
+st.caption("Amber = Committed · Green = Actual — click any row to drill in.")
