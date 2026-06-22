@@ -341,7 +341,7 @@ conn = st.connection("snowflake")
 df = conn.query("""
     SELECT
         billing_customer_name   AS "Customer",
-        property_name           AS "Property / Project",
+        COALESCE(NULLIF(property_name, ''), NULLIF(project_name, '')) AS "Property / Project",
         invoice_number          AS "Invoice",
         outstanding_balance::FLOAT AS "Balance",
         invoice_date            AS "Invoice Date",
