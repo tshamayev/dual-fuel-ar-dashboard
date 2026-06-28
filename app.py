@@ -5,6 +5,7 @@ import base64
 from pathlib import Path
 
 import auth
+import nav
 
 # --- Page config ---
 st.set_page_config(
@@ -729,34 +730,7 @@ df["Collector"] = df.apply(get_collector, axis=1)
 
 # === SIDEBAR ===
 with st.sidebar:
-    flame_path = Path(__file__).parent / "Flame.png"
-    if flame_path.exists():
-        flame_b64 = base64.b64encode(flame_path.read_bytes()).decode()
-        st.markdown(
-            f'<div class="sidebar-logo">'
-            f'<img src="data:image/png;base64,{flame_b64}">'
-            f'<p class="sidebar-title">Dual Fuel</p>'
-            f'<p class="sidebar-subtitle">AR Dashboard</p>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-    # Custom navigation links (replaces default sidebar nav)
-    st.page_link("app.py", label="AR Dashboard", icon="📊")
-    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
-    st.page_link("pages/2_Project_Costs.py", label="Project Costs", icon="💰")
-
-    # Session controls
-    _user = st.session_state.get("username", "")
-    if _user:
-        st.caption(f"Signed in as {_user}")
-    if st.button("🔄 Refresh data", use_container_width=True):
-        st.cache_data.clear()  # force the next queries to re-hit Snowflake
-        st.rerun()
-    if st.button("Sign out", use_container_width=True):
-        auth.sign_out(controller)
-
-    st.markdown("---")
+    nav.render_sidebar_header(controller, subtitle="AR Dashboard")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
