@@ -212,65 +212,56 @@ st.dataframe(
 )
 st.divider()
 
-# --- Drill-down tree: Cost Type > Phase > Department > Cost Code > line items ---
-st.markdown('<p class="section-label">Drill-down — Cost Type ▸ Phase ▸ Department ▸ Cost Code ▸ Items</p>', unsafe_allow_html=True)
-
+# --- Cost detail: flat, scrollable table with table-only filters ---
 detail = conn.query(f"""
-    SELECT cost_type, phase, department, cost_code, source, ref, item,
+    SELECT cost_type, phase, department, cost_code, source, vendor, ref, item,
            committed_amount::FLOAT AS committed_amount,
-           actual_amount::FLOAT    AS actual_amount
+           actual_amount::FLOAT    AS actual_amount,
+           line_date
     FROM ANALYTICS.GOLD.FCT_PROJECT_COST_DETAIL
     WHERE project_id = '{pid}'
 """, ttl=3600)
 detail.columns = [c.lower() for c in detail.columns]
 
-if detail.empty:
-    st.info("No cost detail for this project yet.")
+# Filters for the detail table ONLY — rendered in the sidebar below the project
+# selector. They never touch the KPIs or the Costs-by-Cost-Type totals above.
+with st.sidebar:
+    st.markdown('<p class="filter-header">Cost Detail Filters</p>', unsafe_allow_html=True)
+    f_cost_type = st.multiselect("Cost Type", sorted(detail["cost_type"].dropna().unique()))
+    f_dept      = st.multiselect("Department", sorted(detail["department"].dropna().unique()))
+    f_vendor    = st.multiselect("Vendor", sorted(detail["vendor"].dropna().unique()))
+
+st.markdown('<p class="section-label">Cost Detail</p>', unsafe_allow_html=True)
+
+fdet = detail.copy()
+if f_cost_type:
+    fdet = fdet[fdet["cost_type"].isin(f_cost_type)]
+if f_dept:
+    fdet = fdet[fdet["department"].isin(f_dept)]
+if f_vendor:
+    fdet = fdet[fdet["vendor"].isin(f_vendor)]
+
+if fdet.empty:
+    st.info("No cost lines match these filters.")
 else:
-    import html as _html
-
-    def _money(v):
-        return f"${v:,.0f}" if v else "—"
-
-    def _sumlabel(comm, act):
-        bits = []
-        if comm:
-            bits.append(f'<span class="amt comm">Committed {_money(comm)}</span>')
-        if act:
-            bits.append(f'<span class="amt act">Actual {_money(act)}</span>')
-        return " ".join(bits) if bits else '<span class="amt">—</span>'
-
-    ORD = ["Labor", "Equipment", "Material", "Other", "Subcontractor", "Overhead", "Unspecified"]
-    parts = ['<div class="cost-tree">']
-    for ct, ctdf in sorted(detail.groupby("cost_type"), key=lambda kv: ORD.index(kv[0]) if kv[0] in ORD else 99):
-        parts.append(f'<details class="lvl1"><summary><span class="lbl">{_html.escape(str(ct))}</span>'
-                     f'{_sumlabel(ctdf.committed_amount.sum(), ctdf.actual_amount.sum())}</summary>')
-        for ph, phdf in sorted(ctdf.groupby("phase")):
-            parts.append(f'<details><summary><span class="lbl">{_html.escape(str(ph))}</span>'
-                         f'{_sumlabel(phdf.committed_amount.sum(), phdf.actual_amount.sum())}</summary>')
-            for dep, depdf in sorted(phdf.groupby("department")):
-                parts.append(f'<details><summary><span class="lbl">{_html.escape(str(dep))}</span>'
-                             f'{_sumlabel(depdf.committed_amount.sum(), depdf.actual_amount.sum())}</summary>')
-                for cc, ccdf in sorted(depdf.groupby("cost_code")):
-                    parts.append(f'<details><summary><span class="lbl">{_html.escape(str(cc))}</span>'
-                                 f'{_sumlabel(ccdf.committed_amount.sum(), ccdf.actual_amount.sum())}</summary>')
-                    leaf = (ccdf.groupby(["source", "ref", "item"], as_index=False)
-                                .agg(committed=("committed_amount", "sum"), actual=("actual_amount", "sum")))
-                    leaf["amt"] = leaf["committed"] + leaf["actual"]
-                    leaf = leaf.sort_values("amt", ascending=False)
-                    for r in leaf.head(100).itertuples():
-                        amt = r.committed if r.committed else r.actual
-                        cls = "comm" if r.committed else "act"
-                        parts.append(f'<div class="line"><span class="line-ref">{_html.escape(str(r.ref))}</span>'
-                                     f'<span class="line-item">{_html.escape(str(r.item))}</span>'
-                                     f'<span class="line-amt {cls}">{_money(amt)}</span></div>')
-                    if len(leaf) > 100:
-                        parts.append(f'<div class="line"><span class="line-item">+{len(leaf) - 100} more line items…</span></div>')
-                    parts.append('</details>')
-                parts.append('</details>')
-            parts.append('</details>')
-        parts.append('</details>')
-    parts.append('</div>')
-    st.markdown("".join(parts), unsafe_allow_html=True)
-
-st.caption("Amber = Committed · Green = Actual — click any row to drill in.")
+    disp = fdet.copy()
+    disp["amount"] = disp["committed_amount"].fillna(0) + disp["actual_amount"].fillna(0)
+    disp["line_date"] = pd.to_datetime(disp["line_date"], errors="coerce")
+    disp = disp.sort_values("line_date", ascending=False, na_position="last")
+    disp = disp[["cost_type", "phase", "department", "cost_code", "vendor",
+                 "source", "ref", "item", "amount", "line_date"]].rename(columns={
+        "cost_type": "Cost Type", "phase": "Phase", "department": "Department",
+        "cost_code": "Cost Code", "vendor": "Vendor", "source": "Source",
+        "ref": "Ref", "item": "Item", "amount": "Amount", "line_date": "Date",
+    })
+    st.dataframe(
+        disp.style.format({
+            "Amount": "${:,.2f}",
+            "Date": lambda v: v.strftime("%m/%d/%Y") if pd.notna(v) else "—",
+        }),
+        use_container_width=True, height=480, hide_index=True,
+    )
+    st.caption(
+        f"{len(disp):,} line items  ·  Committed ${fdet['committed_amount'].sum():,.2f}  ·  "
+        f"Actual ${fdet['actual_amount'].sum():,.2f}  —  these filters affect only this table, not the totals above."
+    )
