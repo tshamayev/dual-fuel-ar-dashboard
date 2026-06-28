@@ -7,6 +7,7 @@ import sys
 # Make the repo root importable so `import auth` works from the pages/ folder.
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import auth
+import nav
 
 st.set_page_config(
     page_title="Project Analysis — Dual Fuel",
@@ -105,7 +106,7 @@ df = conn.query("""
         overbilled_underbilled::FLOAT        AS overbilled_underbilled
     FROM ANALYTICS.GOLD.FCT_PROJECT_MONTHLY_ANALYSIS
     ORDER BY project_number, month_date
-""", ttl=0)
+""", ttl=3600)  # cache 1 hour; "Refresh data" forces a fresh pull
 
 # Rename columns for display
 df.columns = [c.upper() for c in df.columns]
@@ -127,32 +128,7 @@ df = df.rename(columns={
 
 # === SIDEBAR ===
 with st.sidebar:
-    import base64
-    from pathlib import Path
-    flame_path = Path(__file__).parent.parent / "Flame.png"
-    if flame_path.exists():
-        flame_b64 = base64.b64encode(flame_path.read_bytes()).decode()
-        st.markdown(
-            f'<div class="sidebar-logo">'
-            f'<img src="data:image/png;base64,{flame_b64}">'
-            f'<p class="sidebar-title">Dual Fuel</p>'
-            f'<p class="sidebar-subtitle">Project Analysis</p>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
-    # Custom navigation links
-    st.page_link("app.py", label="AR Dashboard", icon="📊")
-    st.page_link("pages/1_Project_Analysis.py", label="Project Analysis", icon="📈")
-
-    # Session controls
-    _user = st.session_state.get("username", "")
-    if _user:
-        st.caption(f"Signed in as {_user}")
-    if st.button("Sign out", use_container_width=True):
-        auth.sign_out(controller)
-
-    st.markdown("---")
+    nav.render_sidebar_header(controller, subtitle="Project Analysis")
 
     st.markdown('<p class="filter-header">Filters</p>', unsafe_allow_html=True)
 
